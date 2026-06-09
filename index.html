@@ -221,6 +221,8 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
 .btn-send { background:linear-gradient(135deg,var(--gold),#e0a800); color:#000; border:none; padding:7px 18px; border-radius:50px; font-weight:700; font-size:0.75rem; cursor:pointer; letter-spacing:0.5px; transition:var(--transition); white-space:nowrap; }
 .btn-send:hover { transform:scale(1.03); box-shadow:0 4px 16px rgba(240,185,11,0.3); }
 .btn-send:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-giveup { background:transparent; border:1px solid rgba(255,23,68,0.3); color:var(--lose-red); padding:7px 14px; border-radius:50px; font-weight:600; font-size:0.7rem; cursor:pointer; letter-spacing:0.5px; transition:var(--transition); white-space:nowrap; }
+.btn-giveup:hover { background:rgba(255,23,68,0.1); border-color:var(--lose-red); }
 
 /* Overlay */
 .overlay { position:fixed; inset:0; background:rgba(6,8,15,0.94); backdrop-filter:blur(12px); z-index:100; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.5s ease-out; }
@@ -396,6 +398,7 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
       <div class="input-meta">
         <span class="char-count" id="charCount" style="display:none">Pool: 500</span>
         <button class="btn-send" id="sendBtn" onclick="sendMessage()" disabled>Send ⚡</button>
+        <button class="btn-giveup" id="giveUpBtn" onclick="giveUp()" style="display:none">🏳️ Give Up</button>
       </div>
     </div>
   </div>
@@ -556,6 +559,7 @@ function resetDebate() {
   document.getElementById('userInput').value = '';
   document.getElementById('userInput').disabled = false;
   updateCharCount();
+  document.getElementById('giveUpBtn').style.display = 'none';
   document.getElementById('overlayContainer').innerHTML = '';
   setRobotState('idle');
 }
@@ -578,6 +582,22 @@ function handleInput() {
 
 function handleKeydown(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!document.getElementById('sendBtn').disabled) sendMessage(); }
+}
+
+function giveUp() {
+  if (!debateStarted || debateOver) return;
+  if (!confirm('Surrender the debate? The AI will claim victory.')) return;
+  debateOver = true;
+  document.getElementById('userInput').disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('giveUpBtn').style.display = 'none';
+  robotStopSpeaking();
+  if (mode === 'defense') {
+    addMessage('ai', 'You have surrendered. YOUR DEFENSE HAS FALLEN! I win this debate. 🏆');
+  } else {
+    addMessage('ai', 'You have conceded the debate. Victory is mine! 🏆');
+  }
+  endDebate('lose');
 }
 
 // ─── DEBATE AREA ─────────────────────────────
@@ -631,7 +651,7 @@ async function sendMessage() {
   addMessage('user', userMessage);
   debateHistory.push({ role: 'user', content: userMessage });
 
-  if (!debateStarted) { debateStarted = true; await getAIResponse(true); }
+  if (!debateStarted) { debateStarted = true; document.getElementById('giveUpBtn').style.display = 'inline-block'; await getAIResponse(true); }
   else { await getAIResponse(false); }
 
   input.disabled = false;
@@ -694,19 +714,31 @@ async function getAIResponse(isFirst) {
 }
 
 function checkGameEnd(aiMessage) {
+  const msg = aiMessage.toLowerCase();
+
   if (mode === 'defense') {
-    if (aiMessage.includes('YOUR DEFENSE HAS FALLEN')) { endDebate('lose'); return; }
-    if (aiMessage.includes('IMPRESSIVE DEFENSE') && aiMessage.includes('You win')) { endDebate('win'); return; }
+    // AI declares player's defense broken → player LOST
+    if (msg.includes('your defense has fallen') || msg.includes('defense has crumbled') || msg.includes('cannot defend') || msg.includes('i win this debate')) {
+      endDebate('lose'); return;
+    }
+    // AI acknowledges player's strong defense → player WON
+    if ((msg.includes('impressive defense') || msg.includes('cannot break your position') || msg.includes('you win') || msg.includes('i concede')) && !msg.includes('i win this debate')) {
+      endDebate('win'); return;
+    }
   } else {
-    if (aiMessage.includes('I CONCEDE')) { endDebate('win'); return; }
+    // AI concedes → player WON
+    if (msg.includes('i concede') || msg.includes('you win') || msg.includes('victory is yours') || msg.includes('you have won') || msg.includes('i admit defeat') || msg.includes('i surrender') || msg.includes('you\'ve convinced me') || msg.includes('i cannot counter')) {
+      endDebate('win'); return;
+    }
   }
 
-  if (totalExchanges >= 15 && !debateOver) {
+  // Safety cap
+  if (totalExchanges >= 12 && !debateOver) {
     if (mode === 'defense') {
-      addMessage('ai', '⚖️ *The debate has reached its limit. The judges deliberate...*\n\nYOUR DEFENSE HAS FALLEN! I win this debate. 🏆\nSustained attacks overwhelmed your position.');
+      addMessage('ai', '⚖️ *The debate has reached its limit. The judges deliberate...*\n\nAfter sustained attacks, YOUR DEFENSE HAS FALLEN! I win this debate. 🏆');
       endDebate('lose');
     } else {
-      addMessage('ai', '⚖️ *The debate has reached its limit. The judges deliberate...*\n\nAlright — you fought brilliantly. I CONCEDE. 🏳️\nVictory is yours.');
+      addMessage('ai', '⚖️ *The debate has reached its limit. The judges deliberate...*\n\nAfter a long and hard-fought debate, I must admit — I CONCEDE. 🏳️\nVictory is yours.');
       endDebate('win');
     }
   }
@@ -716,6 +748,7 @@ async function endDebate(result) {
   debateOver = true;
   document.getElementById('userInput').disabled = true;
   document.getElementById('sendBtn').disabled = true;
+  document.getElementById('giveUpBtn').style.display = 'none';
   robotStopSpeaking();
 
   const isWin = result === 'win';
