@@ -267,6 +267,19 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
     <button class="mode-tab active" data-mode="titan" onclick="setMode('titan')">🏛️ Titan <span class="mode-desc">— Unyielding</span></button>
     <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">⚡ Sprint <span class="mode-desc">— 500 total</span></button>
     <button class="mode-tab" data-mode="defense" onclick="setMode('defense')">🛡️ Defense <span class="mode-desc">— Hold the line</span></button>
+    <button class="mode-tab settings-tab" onclick="toggleSettings()" style="margin-left:auto">⚙️</button>
+  </div>
+  
+  <!-- Settings Panel -->
+  <div id="settingsPanel" style="display:none;margin-top:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;text-align:left;max-width:500px;margin-left:auto;margin-right:auto;">
+    <div style="font-size:0.7rem;color:var(--text2);margin-bottom:8px;">
+      💡 <b>Get a free Gemini API key</b> at <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--gold)">aistudio.google.com</a> — 1500 requests/day free. Paste it below for a reliable backup when OpenRouter is congested.
+    </div>
+    <div style="display:flex;gap:6px;">
+      <input id="geminiKeyInput" type="password" placeholder="Paste Gemini API key..." style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:0.75rem;">
+      <button class="btn-sm" onclick="saveGeminiKey()">Save</button>
+    </div>
+    <div id="geminiStatus" style="font-size:0.65rem;margin-top:6px;color:var(--text3);"></div>
   </div>
 </header>
 
@@ -409,8 +422,49 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
 <script>
 // ─── CONFIG ──────────────────────────────────
 const OR_KEY = atob('c2stb3ItdjEtM2MzNmNmMDgxYjQ4OGZkYjI0N2RiODA3MGFhOGNiODdlYzgzM2QzM2E4Mzg1NWVlZmFhNWQ1ODlmMGY1MTg0Yw==');
-const MODEL = 'openrouter/free';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+let GEMINI_KEY = localStorage.getItem('gemini_key') || '';
+
+function saveGeminiKey() {
+  const val = document.getElementById('geminiKeyInput').value.trim();
+  if (val) {
+    GEMINI_KEY = val;
+    localStorage.setItem('gemini_key', val);
+    document.getElementById('geminiStatus').textContent = '✅ Gemini key saved! Reliable backup ready.';
+    document.getElementById('geminiStatus').style.color = 'var(--win-green)';
+  }
+}
+
+function toggleSettings() {
+  const panel = document.getElementById('settingsPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (GEMINI_KEY) {
+    document.getElementById('geminiStatus').textContent = '✅ Gemini key configured. Will try Gemini first.';
+    document.getElementById('geminiStatus').style.color = 'var(--win-green)';
+  }
+}
+
+async function tryGemini(messages) {
+  if (!GEMINI_KEY) return null;
+  const contents = [];
+  let sysPrompt = '';
+  for (const m of messages) {
+    if (m.role === 'system') { sysPrompt = m.content; continue; }
+    contents.push({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] });
+  }
+  const body = { contents, generationConfig: { temperature: 0.85, maxOutputTokens: 600, topP: 0.95 } };
+  if (sysPrompt) body.systemInstruction = { parts: [{ text: sysPrompt }] };
+  try {
+    const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  return null;
+}
+const MODEL = 'openrouter/free';
 
 // ─── STATE ───────────────────────────────────
 let mode = 'titan';
@@ -629,6 +683,13 @@ function addTypingIndicator() {
 }
 
 function removeTypingIndicator() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+function updateTypingMsg(text) {
+  const el = document.getElementById('typingIndicator');
+  if (el) {
+    const content = el.querySelector('.msg-content');
+    if (content) content.textContent = text;
+  }
+}
 function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
 // ─── DEBATE LOGIC ────────────────────────────
@@ -677,33 +738,60 @@ async function getAIResponse(isFirst) {
   }
 
   try {
-    let lastError = null;
-    // Try primary model, fall back if rate-limited
-    for (const mdl of ['openrouter/free', 'google/gemma-4-31b-it:free', 'moonshotai/kimi-k2.6:free', 'qwen/qwen3-next-80b-a3b-instruct:free', 'nvidia/nemotron-3-nano-30b-a3b:free', 'liquid/lfm-2.5-1.2b-instruct:free', 'nvidia/nemotron-nano-12b-v2-vl:free']) {
-      try {
-        const resp = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+OR_KEY, 'HTTP-Referer':window.location.href, 'X-Title':'Debate Arena' },
-          body: JSON.stringify({ model:mdl, messages:messages, temperature:0.85, max_tokens:600, top_p:0.95 })
-        });
-        if (resp.status === 429) { lastError = 'Rate limited, trying another model...'; continue; }
-        if (!resp.ok) { const et = await resp.text(); throw new Error(`API ${resp.status}: ${et.substring(0,200)}`); }
-        const data = await resp.json();
-        const aiMessage = data.choices[0].message.content;
+    // 1. Try Gemini first if key is configured (most reliable free tier)
+    if (GEMINI_KEY) {
+      updateTypingMsg('Thinking (Gemini)...');
+      const geminiReply = await tryGemini(messages);
+      if (geminiReply) {
         removeTypingIndicator();
         robotStopSpeaking();
-        addMessage('ai', aiMessage);
-        debateHistory.push({ role: 'assistant', content: aiMessage });
-        checkGameEnd(aiMessage);
+        addMessage('ai', geminiReply);
+        debateHistory.push({ role: 'assistant', content: geminiReply });
+        checkGameEnd(geminiReply);
         return;
-      } catch (innerErr) {
-        lastError = innerErr.message;
-        // Don't continue retrying on non-429 errors
-        if (!lastError.includes('Rate limited') && !lastError.includes('429')) throw innerErr;
       }
     }
-    // All models failed
-    throw new Error(lastError || 'All models unavailable. Please try again.');
+
+    // 2. Fall back to OpenRouter with retries
+    let lastError = null;
+    const modelList = ['openrouter/free', 'google/gemma-4-31b-it:free', 'moonshotai/kimi-k2.6:free', 'qwen/qwen3-next-80b-a3b-instruct:free', 'nvidia/nemotron-3-nano-30b-a3b:free', 'liquid/lfm-2.5-1.2b-instruct:free', 'nvidia/nemotron-nano-12b-v2-vl:free'];
+
+    for (const mdl of modelList) {
+      // Try each model up to 3 times with increasing delays
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          if (attempt > 0) {
+            const delay = attempt * 2000; // 2s, 4s
+            updateTypingMsg(`Rate limited — retrying in ${delay/1000}s...`);
+            await new Promise(r => setTimeout(r, delay));
+          }
+          const resp = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+OR_KEY, 'HTTP-Referer':window.location.href, 'X-Title':'Debate Arena' },
+            body: JSON.stringify({ model:mdl, messages:messages, temperature:0.85, max_tokens:600, top_p:0.95 })
+          });
+          if (resp.status === 429) {
+            lastError = 'Rate limited';
+            if (attempt < 2) continue; // retry same model
+            break; // try next model
+          }
+          if (!resp.ok) { const et = await resp.text(); throw new Error(`API ${resp.status}: ${et.substring(0,200)}`); }
+          const data = await resp.json();
+          const aiMessage = data.choices[0].message.content;
+          removeTypingIndicator();
+          robotStopSpeaking();
+          addMessage('ai', aiMessage);
+          debateHistory.push({ role: 'assistant', content: aiMessage });
+          checkGameEnd(aiMessage);
+          return; // SUCCESS
+        } catch (innerErr) {
+          lastError = innerErr.message;
+          if (!lastError.includes('Rate limited') && !lastError.includes('429')) throw innerErr;
+        }
+      }
+    }
+    // All models + retries exhausted
+    throw new Error('All models are busy right now. Free AI APIs are congested — please wait a moment and try again. 🕐');
   } catch (err) {
     removeTypingIndicator();
     robotStopSpeaking();
