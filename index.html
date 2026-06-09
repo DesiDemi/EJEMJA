@@ -263,7 +263,7 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
   <div class="subtitle">Can you defeat the machine?</div>
   <div class="mode-tabs">
     <button class="mode-tab active" data-mode="titan" onclick="setMode('titan')">🏛️ Titan <span class="mode-desc">— Unyielding</span></button>
-    <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">⚡ Sprint <span class="mode-desc">— 150 chars</span></button>
+    <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">⚡ Sprint <span class="mode-desc">— 500 chars</span></button>
     <button class="mode-tab" data-mode="defense" onclick="setMode('defense')">🛡️ Defense <span class="mode-desc">— Hold the line</span></button>
   </div>
 </header>
@@ -394,7 +394,7 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
     <div class="input-wrapper">
       <textarea id="userInput" placeholder="Make your argument..." rows="1" oninput="handleInput()" onkeydown="handleKeydown(event)"></textarea>
       <div class="input-meta">
-        <span class="char-count" id="charCount" style="display:none">0/150</span>
+        <span class="char-count" id="charCount" style="display:none">0/500</span>
         <button class="btn-send" id="sendBtn" onclick="sendMessage()" disabled>Send ⚡</button>
       </div>
     </div>
@@ -562,14 +562,14 @@ function updateCharCount() {
   const input = document.getElementById('userInput');
   const count = document.getElementById('charCount');
   const len = input.value.length;
-  count.textContent = `${len}/150`;
-  count.className = 'char-count' + (len > 140 ? ' warning' : '') + (len > 150 ? ' over' : '');
+  count.textContent = `${len}/500`;
+  count.className = 'char-count' + (len > 480 ? ' warning' : '') + (len > 500 ? ' over' : '');
 }
 
 function handleInput() {
   updateCharCount();
   const input = document.getElementById('userInput');
-  if (mode === 'sprint' && input.value.length > 150) { input.value = input.value.substring(0, 150); updateCharCount(); }
+  if (mode === 'sprint' && input.value.length > 500) { input.value = input.value.substring(0, 500); updateCharCount(); }
   document.getElementById('sendBtn').disabled = input.value.trim() === '' || debateOver;
 }
 
@@ -614,7 +614,7 @@ async function sendMessage() {
   const input = document.getElementById('userInput');
   const userMessage = input.value.trim();
   if (!userMessage) return;
-  if (mode === 'sprint' && userMessage.length > 150) { input.value = userMessage.substring(0, 150); updateCharCount(); return; }
+  if (mode === 'sprint' && userMessage.length > 500) { input.value = userMessage.substring(0, 500); updateCharCount(); return; }
 
   input.disabled = true;
   document.getElementById('sendBtn').disabled = true;
