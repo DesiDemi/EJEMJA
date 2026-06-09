@@ -453,7 +453,7 @@ async function tryGemini(messages) {
     if (m.role === 'system') { sysPrompt = m.content; continue; }
     contents.push({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] });
   }
-  const body = { contents, generationConfig: { temperature: 0.85, maxOutputTokens: 600, topP: 0.95 } };
+  const body = { contents, generationConfig: { temperature: 0.85, maxOutputTokens: 200, topP: 0.95 } };
   if (sysPrompt) body.systemInstruction = { parts: [{ text: sysPrompt }] };
   try {
     const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
@@ -547,7 +547,7 @@ CRITICAL RULE: NEVER concede unless faced with an argument so logically airtight
 If the human presents such an irrefutable argument, respond EXACTLY:
 "I CONCEDE. You have presented an argument I cannot counter. 🏳️\n[Brief explanation of why their argument is irrefutable]\nVictory is yours. Well debated."
 
-Until that moment, ALWAYS counter-argue. Be relentless. Be brilliant.`;
+Until that moment, ALWAYS counter-argue. Be relentless. Be brilliant.\n\nIMPORTANT: Keep every response UNDER 500 characters. Be concise.`;
   }
   if (mode === 'sprint') {
     return `You are in a CASUAL DEBATE. You are a SIMPLE-MINDED AI — not the sharpest tool, but sincere. You hold your position but you're easily convinced by good points. Keep responses CONCISE (2-3 sentences).
@@ -555,7 +555,7 @@ Until that moment, ALWAYS counter-argue. Be relentless. Be brilliant.`;
 If the human makes a genuinely compelling point, acknowledge it. If they land 2-3 solid arguments, concede:
 "Alright, you've convinced me! I CONCEDE. 🏳️\n[What convinced you — 1 sentence]\nGood debate!"
 
-Be fair and reasonable. Don't roll over instantly — make them earn it.`;
+Be fair and reasonable. Don't roll over instantly — make them earn it.\n\nIMPORTANT: Keep every response UNDER 500 characters.`;
   }
   if (mode === 'defense') {
     return `You are in a COMBAT DEBATE. You are a WARRIOR AI — aggressive, relentless, devastating. The human must DEFEND their position while you ATTACK with sharp arguments, logical fallacies in their reasoning, counter-examples, and rhetorical force.
@@ -566,7 +566,9 @@ If their defense crumbles — they give up, contradict themselves, or collapse �
 "YOUR DEFENSE HAS FALLEN! I win this debate. 🏆\n[Summary of why their position couldn't stand]\nBetter luck next time."
 
 If they mount a truly impressive, multi-layered defense that withstands ALL your attacks, acknowledge:
-"IMPRESSIVE DEFENSE. I cannot break your position. You win. 🛡️\n[What made their defense so strong]\nRespect."`;
+"IMPRESSIVE DEFENSE. I cannot break your position. You win. 🛡️\n[What made their defense so strong]\nRespect."
+
+IMPORTANT: Keep every response UNDER 500 characters. Be sharp.`;
   }
 }
 
@@ -768,7 +770,7 @@ async function getAIResponse(isFirst) {
           const resp = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+OR_KEY, 'HTTP-Referer':window.location.href, 'X-Title':'Debate Arena' },
-            body: JSON.stringify({ model:mdl, messages:messages, temperature:0.85, max_tokens:600, top_p:0.95 })
+            body: JSON.stringify({ model:mdl, messages:messages, temperature:0.85, max_tokens:200, top_p:0.95 })
           });
           if (resp.status === 429) {
             lastError = 'Rate limited';
