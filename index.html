@@ -263,7 +263,7 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
   <div class="subtitle">Can you defeat the machine?</div>
   <div class="mode-tabs">
     <button class="mode-tab active" data-mode="titan" onclick="setMode('titan')">🏛️ Titan <span class="mode-desc">— Unyielding</span></button>
-    <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">⚡ Sprint <span class="mode-desc">— 500 chars</span></button>
+    <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">⚡ Sprint <span class="mode-desc">— 500 total</span></button>
     <button class="mode-tab" data-mode="defense" onclick="setMode('defense')">🛡️ Defense <span class="mode-desc">— Hold the line</span></button>
   </div>
 </header>
@@ -394,7 +394,7 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
     <div class="input-wrapper">
       <textarea id="userInput" placeholder="Make your argument..." rows="1" oninput="handleInput()" onkeydown="handleKeydown(event)"></textarea>
       <div class="input-meta">
-        <span class="char-count" id="charCount" style="display:none">0/500</span>
+        <span class="char-count" id="charCount" style="display:none">Pool: 500</span>
         <button class="btn-send" id="sendBtn" onclick="sendMessage()" disabled>Send ⚡</button>
       </div>
     </div>
@@ -417,6 +417,7 @@ let debateStarted = false;
 let debateOver = false;
 let messageIndex = 0;
 let totalExchanges = 0;
+let sprintCharsLeft = 500;
 
 // ─── TOPICS ──────────────────────────────────
 const TOPICS = [
@@ -548,6 +549,7 @@ function customTopic() {
 
 function resetDebate() {
   debateHistory = []; debateStarted = false; debateOver = false; totalExchanges = 0;
+  sprintCharsLeft = 500;
   document.getElementById('debateArea').innerHTML = '';
   document.getElementById('emptyState').style.display = 'flex';
   document.getElementById('sendBtn').disabled = !topic;
@@ -559,18 +561,19 @@ function resetDebate() {
 }
 
 function updateCharCount() {
-  const input = document.getElementById('userInput');
   const count = document.getElementById('charCount');
-  const len = input.value.length;
-  count.textContent = `${len}/500`;
-  count.className = 'char-count' + (len > 480 ? ' warning' : '') + (len > 500 ? ' over' : '');
+  if (mode === 'sprint') {
+    count.textContent = 'Pool: ' + sprintCharsLeft;
+    count.className = 'char-count' + (sprintCharsLeft < 100 ? ' warning' : '') + (sprintCharsLeft <= 0 ? ' over' : '');
+  }
 }
 
 function handleInput() {
   updateCharCount();
   const input = document.getElementById('userInput');
-  if (mode === 'sprint' && input.value.length > 500) { input.value = input.value.substring(0, 500); updateCharCount(); }
-  document.getElementById('sendBtn').disabled = input.value.trim() === '' || debateOver;
+  if (mode === 'sprint' && sprintCharsLeft <= 0) { input.value = ''; updateCharCount(); }
+  else if (mode === 'sprint' && input.value.length > sprintCharsLeft) { input.value = input.value.substring(0, sprintCharsLeft); }
+  document.getElementById('sendBtn').disabled = input.value.trim() === '' || debateOver || (mode === 'sprint' && sprintCharsLeft <= 0);
 }
 
 function handleKeydown(e) {
@@ -614,7 +617,11 @@ async function sendMessage() {
   const input = document.getElementById('userInput');
   const userMessage = input.value.trim();
   if (!userMessage) return;
-  if (mode === 'sprint' && userMessage.length > 500) { input.value = userMessage.substring(0, 500); updateCharCount(); return; }
+  if (mode === 'sprint') {
+    if (sprintCharsLeft <= 0) return;
+    sprintCharsLeft = Math.max(0, sprintCharsLeft - userMessage.length);
+    updateCharCount();
+  }
 
   input.disabled = true;
   document.getElementById('sendBtn').disabled = true;
