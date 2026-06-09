@@ -14,7 +14,6 @@
   --gold: #f0b90b;
   --gold-dim: #b8970a;
   --fire: #ff5e3a;
-  --fire-glow: rgba(255,94,58,0.3);
   --text: #e4e5f0;
   --text2: #8b8fa3;
   --text3: #5a5e72;
@@ -24,6 +23,9 @@
   --radius: 16px;
   --radius-sm: 10px;
   --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+  --robot-blue: #5b8def;
+  --robot-dumb: #8e99b0;
+  --robot-warrior: #e04040;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; overflow:hidden; }
@@ -37,444 +39,346 @@ body {
   overflow:hidden;
 }
 
-/* Background particles */
-#particles {
-  position:fixed; inset:0; pointer-events:none; z-index:0;
-  opacity:0.15;
-}
-#particles span {
-  position:absolute;
-  display:block;
-  width:2px; height:2px;
-  background:var(--gold);
-  border-radius:50%;
-  animation:float 8s infinite ease-in-out;
-}
-@keyframes float {
-  0%,100% { transform:translateY(0) scale(1); opacity:0; }
-  10% { opacity:1; }
-  90% { opacity:1; }
-  50% { transform:translateY(-60vh) scale(1.5); }
-}
+/* Particles */
+#particles { position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.12; }
+#particles span { position:absolute; display:block; width:2px; height:2px; background:var(--gold); border-radius:50%; animation:float 8s infinite ease-in-out; }
+@keyframes float { 0%,100%{ transform:translateY(0) scale(1); opacity:0; } 10%{ opacity:1; } 90%{ opacity:1; } 50%{ transform:translateY(-60vh) scale(1.5); } }
 
 /* Header */
-header {
-  position:relative; z-index:10;
-  padding:20px 24px 0;
-  text-align:center;
-  flex-shrink:0;
-}
-.logo {
-  font-family:'Playfair Display',serif;
-  font-size:2.2rem; font-weight:900;
-  background:linear-gradient(135deg, var(--gold), #ffaa00, var(--fire));
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  background-clip:text;
-  letter-spacing:2px;
-  margin-bottom:2px;
-}
-.subtitle {
-  font-size:0.75rem; color:var(--text3);
-  text-transform:uppercase; letter-spacing:4px;
-  margin-bottom:18px;
-}
+header { position:relative; z-index:10; padding:16px 24px 0; text-align:center; flex-shrink:0; }
+.logo { font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; background:linear-gradient(135deg,var(--gold),#ffaa00,var(--fire)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:2px; }
+.subtitle { font-size:0.7rem; color:var(--text3); text-transform:uppercase; letter-spacing:4px; margin-bottom:14px; }
 
 /* Mode Tabs */
-.mode-tabs {
+.mode-tabs { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+.mode-tab { background:var(--card); border:1px solid var(--border); color:var(--text2); padding:8px 16px; border-radius:50px; cursor:pointer; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; transition:var(--transition); display:flex; align-items:center; gap:5px; white-space:nowrap; }
+.mode-tab:hover { border-color:var(--gold-dim); color:var(--text); }
+.mode-tab.active { background:linear-gradient(135deg,rgba(240,185,11,0.15),rgba(255,94,58,0.1)); border-color:var(--gold); color:var(--gold); box-shadow:0 0 16px rgba(240,185,11,0.08); }
+.mode-desc { font-size:0.6rem; color:var(--text3); font-weight:400; }
+
+/* ─── ROBOT AREA ─── */
+.robot-stage {
+  position:relative; z-index:10;
+  flex-shrink:0;
   display:flex;
-  gap:8px;
   justify-content:center;
-  flex-wrap:wrap;
+  align-items:center;
+  height:150px;
+  margin:6px 0 2px;
 }
-.mode-tab {
-  background:var(--card);
-  border:1px solid var(--border);
-  color:var(--text2);
-  padding:10px 18px;
-  border-radius:50px;
-  cursor:pointer;
-  font-size:0.8rem;
-  font-weight:600;
-  letter-spacing:0.5px;
-  transition:var(--transition);
-  display:flex; align-items:center; gap:6px;
-  white-space:nowrap;
+.robot-container {
+  position:relative;
+  width:140px; height:140px;
+  transition: transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275), filter 0.5s;
 }
-.mode-tab:hover {
-  border-color:var(--gold-dim);
-  color:var(--text);
+.robot-container svg { width:100%; height:100%; display:block; }
+.robot-container.idle { animation: robotBreathe 3s infinite ease-in-out; }
+.robot-container.speaking { animation: robotPulse 0.6s infinite ease-in-out; }
+.robot-container.defeated { animation: robotDefeat 2s ease-in forwards; pointer-events:none; }
+.robot-container.victory { animation: robotCelebrate 1.5s ease-out forwards; }
+
+@keyframes robotBreathe {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-4px); }
 }
-.mode-tab.active {
-  background:linear-gradient(135deg, rgba(240,185,11,0.15), rgba(255,94,58,0.1));
-  border-color:var(--gold);
-  color:var(--gold);
-  box-shadow:0 0 20px rgba(240,185,11,0.1);
+@keyframes robotPulse {
+  0%,100% { transform:scale(1); }
+  25% { transform:scale(1.03) translateY(-2px); }
+  75% { transform:scale(0.98) translateY(1px); }
 }
-.mode-icon { font-size:1.1rem; }
-.mode-desc {
-  font-size:0.65rem; color:var(--text3);
-  font-weight:400;
+@keyframes robotDefeat {
+  0% { transform:translateX(0); filter:brightness(1); }
+  10% { transform:translateX(-8px); }
+  20% { transform:translateX(8px); }
+  30% { transform:translateX(-4px); }
+  40% { transform:translateX(4px); filter:brightness(1.5) saturate(0); }
+  50% { transform:translateX(0) scale(1.05); filter:brightness(2) saturate(0); }
+  55% { transform:scale(0.95); filter:brightness(0.3); }
+  65% { transform:scale(1.02) translateY(0); filter:brightness(0.8); }
+  80% { transform:scale(0.85) translateY(10px) rotate(-5deg); filter:brightness(0.2); opacity:0.8; }
+  100% { transform:scale(0.6) translateY(30px) rotate(-10deg); filter:brightness(0.1) blur(3px); opacity:0.2; }
+}
+@keyframes robotCelebrate {
+  0% { transform:scale(0.6) translateY(30px); opacity:0.2; }
+  30% { transform:scale(1.1) translateY(-10px); opacity:1; filter:brightness(1.3); }
+  50% { transform:scale(0.9) translateY(0); filter:brightness(1.1); }
+  70% { transform:scale(1.05) translateY(-5px); }
+  100% { transform:scale(1) translateY(0); opacity:1; filter:brightness(1); }
+}
+
+/* ─── MOUTH ANIMATIONS ─── */
+.robot-mouth { transition: all 0.15s ease; }
+.speaking .robot-mouth { animation: mouthTalk 0.25s infinite alternate ease-in-out; }
+.speaking.fast .robot-mouth { animation: mouthTalkFast 0.12s infinite alternate ease-in-out; }
+
+@keyframes mouthTalk {
+  0% { transform:scaleY(0.3); }
+  30% { transform:scaleY(0.6); }
+  60% { transform:scaleY(1); }
+  100% { transform:scaleY(0.7); }
+}
+@keyframes mouthTalkFast {
+  0% { transform:scaleY(0.2); }
+  40% { transform:scaleY(1.2); }
+  70% { transform:scaleY(0.5); }
+  100% { transform:scaleY(1); }
+}
+
+/* Eye glows */
+.robot-eye-glow { transition:opacity 0.3s; }
+.speaking .robot-eye-glow { animation: eyePulse 0.8s infinite ease-in-out; }
+@keyframes eyePulse {
+  0%,100% { opacity:0.6; }
+  50% { opacity:1; }
+}
+
+/* Warrior eye flare */
+.warrior-eye { transition:all 0.3s; }
+.speaking .warrior-eye { animation: warriorGlare 0.5s infinite alternate; }
+@keyframes warriorGlare {
+  from { filter:brightness(1); }
+  to { filter:brightness(1.8) drop-shadow(0 0 6px var(--robot-warrior)); }
+}
+
+/* Defeated effects */
+.defeated .robot-eye-glow { animation:eyeDeath 0.5s ease-in forwards; }
+@keyframes eyeDeath {
+  0% { opacity:1; }
+  50% { opacity:2; filter:brightness(3); }
+  100% { opacity:0.2; filter:brightness(0.3); }
+}
+
+/* Sparks */
+.robot-spark {
+  position:absolute; width:3px; height:3px; background:var(--gold);
+  border-radius:50%; opacity:0; pointer-events:none;
+}
+.defeated .robot-spark { animation:sparkFly 0.8s ease-out forwards; }
+.defeated .robot-spark:nth-child(1) { animation-delay:0.3s; top:20%; left:30%; }
+.defeated .robot-spark:nth-child(2) { animation-delay:0.5s; top:15%; left:60%; }
+.defeated .robot-spark:nth-child(3) { animation-delay:0.7s; top:40%; left:70%; }
+.defeated .robot-spark:nth-child(4) { animation-delay:0.9s; top:50%; left:20%; }
+@keyframes sparkFly {
+  0% { opacity:0; transform:translate(0,0); }
+  20% { opacity:1; }
+  100% { opacity:0; transform:translate(var(--sx,20px), var(--sy,-30px)); }
 }
 
 /* Main content */
-main {
-  position:relative; z-index:10;
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  max-width:750px;
-  width:100%;
-  margin:0 auto;
-  padding:12px 20px 0;
-  overflow:hidden;
-  min-height:0;
-}
+main { position:relative; z-index:10; flex:1; display:flex; flex-direction:column; max-width:750px; width:100%; margin:0 auto; padding:0 20px 0; overflow:hidden; min-height:0; }
 
-/* Topic Area */
-.topic-area {
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:16px 20px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-shrink:0;
-  margin-bottom:12px;
-}
-.topic-label {
-  font-size:0.65rem; text-transform:uppercase;
-  color:var(--text3); letter-spacing:2px;
-  white-space:nowrap;
-}
-.topic-text {
-  flex:1;
-  font-size:0.95rem; font-weight:500;
-  color:var(--text);
-  min-width:0;
-}
-.topic-buttons {
-  display:flex; gap:6px;
-}
-.btn-sm {
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--text2);
-  padding:6px 12px;
-  border-radius:50px;
-  cursor:pointer;
-  font-size:0.7rem; font-weight:600;
-  letter-spacing:0.5px;
-  transition:var(--transition);
-  white-space:nowrap;
-}
-.btn-sm:hover {
-  border-color:var(--gold-dim);
-  color:var(--gold);
-}
+/* Topic */
+.topic-area { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; display:flex; align-items:center; gap:10px; flex-shrink:0; margin-bottom:10px; }
+.topic-label { font-size:0.6rem; text-transform:uppercase; color:var(--text3); letter-spacing:2px; white-space:nowrap; }
+.topic-text { flex:1; font-size:0.9rem; font-weight:500; color:var(--text); min-width:0; }
+.topic-buttons { display:flex; gap:5px; }
+.btn-sm { background:transparent; border:1px solid var(--border); color:var(--text2); padding:5px 10px; border-radius:50px; cursor:pointer; font-size:0.68rem; font-weight:600; letter-spacing:0.5px; transition:var(--transition); white-space:nowrap; }
+.btn-sm:hover { border-color:var(--gold-dim); color:var(--gold); }
 
-/* Debate Area */
-.debate-area {
-  flex:1;
-  overflow-y:auto;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  padding:4px 0;
-  min-height:0;
-  scroll-behavior:smooth;
-}
+/* Debate */
+.debate-area { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:4px 0; min-height:0; scroll-behavior:smooth; }
 .debate-area::-webkit-scrollbar { width:4px; }
 .debate-area::-webkit-scrollbar-track { background:transparent; }
 .debate-area::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 
 /* Messages */
-.msg {
-  display:flex;
-  gap:10px;
-  animation:slideIn 0.3s ease-out;
-  flex-shrink:0;
-}
-@keyframes slideIn {
-  from { opacity:0; transform:translateY(12px); }
-  to { opacity:1; transform:translateY(0); }
-}
-.msg-avatar {
-  width:36px; height:36px;
-  border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.1rem;
-  flex-shrink:0;
-}
-.msg.ai .msg-avatar {
-  background:linear-gradient(135deg, rgba(240,185,11,0.2), rgba(240,185,11,0.05));
-  border:1px solid var(--gold-dim);
-}
-.msg.user .msg-avatar {
-  background:linear-gradient(135deg, rgba(74,144,255,0.2), rgba(74,144,255,0.05));
-  border:1px solid var(--accent-blue);
-}
-.msg-body {
-  flex:1;
-  min-width:0;
-}
-.msg-sender {
-  font-size:0.7rem; font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:1px;
-  margin-bottom:4px;
-}
+.msg { display:flex; gap:8px; animation:slideIn 0.3s ease-out; flex-shrink:0; }
+@keyframes slideIn { from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:translateY(0); } }
+.msg-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.95rem; flex-shrink:0; }
+.msg.ai .msg-avatar { background:linear-gradient(135deg,rgba(240,185,11,0.2),rgba(240,185,11,0.05)); border:1px solid var(--gold-dim); }
+.msg.user .msg-avatar { background:linear-gradient(135deg,rgba(74,144,255,0.2),rgba(74,144,255,0.05)); border:1px solid var(--accent-blue); }
+.msg-body { flex:1; min-width:0; }
+.msg-sender { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
 .msg.ai .msg-sender { color:var(--gold); }
 .msg.user .msg-sender { color:var(--accent-blue); }
-.msg-content {
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius-sm);
-  padding:14px 16px;
-  font-size:0.9rem;
-  line-height:1.6;
-  color:var(--text);
-  white-space:pre-wrap;
-}
-.msg.user .msg-content {
-  border-color:rgba(74,144,255,0.2);
-}
-.msg.ai .msg-content {
-  border-color:rgba(240,185,11,0.15);
-}
+.msg-content { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:0.85rem; line-height:1.55; color:var(--text); white-space:pre-wrap; }
+.msg.user .msg-content { border-color:rgba(74,144,255,0.2); }
+.msg.ai .msg-content { border-color:rgba(240,185,11,0.15); }
 
-/* Typing indicator */
-.typing .msg-content {
-  display:flex; gap:4px; align-items:center; padding:18px 16px;
-}
-.typing-dot {
-  width:6px; height:6px;
-  background:var(--text3);
-  border-radius:50%;
-  animation:typingBounce 1.4s infinite ease-in-out;
-}
+.typing .msg-content { display:flex; gap:4px; align-items:center; padding:16px 14px; }
+.typing-dot { width:5px; height:5px; background:var(--text3); border-radius:50%; animation:typingBounce 1.4s infinite ease-in-out; }
 .typing-dot:nth-child(2) { animation-delay:0.2s; }
 .typing-dot:nth-child(3) { animation-delay:0.4s; }
-@keyframes typingBounce {
-  0%,60%,100% { transform:translateY(0); opacity:0.3; }
-  30% { transform:translateY(-6px); opacity:1; }
-}
+@keyframes typingBounce { 0%,60%,100%{ transform:translateY(0); opacity:0.3; } 30%{ transform:translateY(-5px); opacity:1; } }
 
-/* Empty state */
-.empty-state {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:var(--text3);
-  text-align:center;
-  gap:12px;
-  padding:40px;
-}
-.empty-icon { font-size:3rem; opacity:0.4; }
-.empty-title { font-size:1rem; font-weight:600; color:var(--text2); }
-.empty-sub { font-size:0.8rem; max-width:300px; line-height:1.5; }
+.empty-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text3); text-align:center; gap:10px; padding:20px; }
+.empty-icon { font-size:2.5rem; opacity:0.3; }
+.empty-title { font-size:0.9rem; font-weight:600; color:var(--text2); }
+.empty-sub { font-size:0.75rem; max-width:280px; line-height:1.5; }
 
-/* Input Area */
-.input-area {
-  flex-shrink:0;
-  padding:12px 0 16px;
-}
-.input-wrapper {
-  display:flex;
-  gap:8px;
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:6px;
-  transition:var(--transition);
-}
-.input-wrapper:focus-within {
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(240,185,11,0.05);
-}
-.input-wrapper textarea {
-  flex:1;
-  background:transparent;
-  border:none;
-  color:var(--text);
-  font-family:'Inter',sans-serif;
-  font-size:0.85rem;
-  padding:8px 10px;
-  resize:none;
-  outline:none;
-  min-height:42px;
-  max-height:120px;
-  line-height:1.5;
-}
+/* Input */
+.input-area { flex-shrink:0; padding:10px 0 14px; }
+.input-wrapper { display:flex; gap:6px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:5px; transition:var(--transition); }
+.input-wrapper:focus-within { border-color:var(--gold); box-shadow:0 0 0 3px rgba(240,185,11,0.04); }
+.input-wrapper textarea { flex:1; background:transparent; border:none; color:var(--text); font-family:'Inter',sans-serif; font-size:0.82rem; padding:8px 10px; resize:none; outline:none; min-height:40px; max-height:110px; line-height:1.5; }
 .input-wrapper textarea::placeholder { color:var(--text3); }
-.input-meta {
-  display:flex; flex-direction:column; align-items:flex-end; gap:6px;
-  padding:4px 6px 4px 0;
-}
-.char-count {
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.65rem;
-  color:var(--text3);
-  white-space:nowrap;
-}
+.input-meta { display:flex; flex-direction:column; align-items:flex-end; gap:5px; padding:4px 4px 4px 0; }
+.char-count { font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--text3); white-space:nowrap; }
 .char-count.warning { color:var(--fire); }
 .char-count.over { color:var(--lose-red); }
-.btn-send {
-  background:linear-gradient(135deg, var(--gold), #e0a800);
-  color:#000;
-  border:none;
-  padding:8px 20px;
-  border-radius:50px;
-  font-weight:700;
-  font-size:0.8rem;
-  cursor:pointer;
-  letter-spacing:0.5px;
-  transition:var(--transition);
-  white-space:nowrap;
-}
-.btn-send:hover { transform:scale(1.03); box-shadow:0 4px 20px rgba(240,185,11,0.3); }
-.btn-send:disabled {
-  opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none;
-}
+.btn-send { background:linear-gradient(135deg,var(--gold),#e0a800); color:#000; border:none; padding:7px 18px; border-radius:50px; font-weight:700; font-size:0.75rem; cursor:pointer; letter-spacing:0.5px; transition:var(--transition); white-space:nowrap; }
+.btn-send:hover { transform:scale(1.03); box-shadow:0 4px 16px rgba(240,185,11,0.3); }
+.btn-send:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
 
 /* Overlay */
-.overlay {
-  position:fixed; inset:0;
-  background:rgba(6,8,15,0.92);
-  backdrop-filter:blur(10px);
-  z-index:100;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  animation:fadeIn 0.4s ease-out;
-}
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-.overlay-card {
-  background:var(--card);
-  border:2px solid var(--border);
-  border-radius:24px;
-  padding:40px 48px;
-  text-align:center;
-  max-width:480px;
-  width:90%;
-  animation:scaleIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
-}
-@keyframes scaleIn {
-  from { transform:scale(0.8); opacity:0; }
-  to { transform:scale(1); opacity:1; }
-}
-.overlay-icon { font-size:4rem; margin-bottom:12px; }
-.overlay-title {
-  font-family:'Playfair Display',serif;
-  font-size:2rem; font-weight:900;
-  margin-bottom:8px;
-}
+.overlay { position:fixed; inset:0; background:rgba(6,8,15,0.94); backdrop-filter:blur(12px); z-index:100; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.5s ease-out; }
+@keyframes fadeIn { from{ opacity:0; } to{ opacity:1; } }
+.overlay-card { background:var(--card); border:2px solid var(--border); border-radius:24px; padding:36px 44px; text-align:center; max-width:460px; width:90%; animation:scaleIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes scaleIn { from{ transform:scale(0.75); opacity:0; } to{ transform:scale(1); opacity:1; } }
+.overlay-icon { font-size:3.5rem; margin-bottom:10px; }
+.overlay-title { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; margin-bottom:6px; }
 .overlay-title.win { color:var(--win-green); }
 .overlay-title.lose { color:var(--lose-red); }
-.overlay-sub {
-  font-size:0.9rem; color:var(--text2);
-  line-height:1.6;
-  margin-bottom:20px;
-}
-.overlay-stats {
-  display:flex; gap:16px; justify-content:center;
-  margin-bottom:24px;
-  flex-wrap:wrap;
-}
-.stat-box {
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--border);
-  border-radius:var(--radius-sm);
-  padding:12px 18px;
-  min-width:80px;
-}
-.stat-num {
-  font-family:'Playfair Display',serif;
-  font-size:1.5rem; font-weight:700;
-  color:var(--gold);
-}
-.stat-label {
-  font-size:0.6rem; text-transform:uppercase;
-  color:var(--text3); letter-spacing:1px;
-}
-.btn-primary {
-  background:linear-gradient(135deg, var(--gold), #e0a800);
-  color:#000;
-  border:none;
-  padding:12px 32px;
-  border-radius:50px;
-  font-weight:700;
-  font-size:0.9rem;
-  cursor:pointer;
-  letter-spacing:0.5px;
-  transition:var(--transition);
-}
-.btn-primary:hover { transform:scale(1.04); box-shadow:0 6px 30px rgba(240,185,11,0.4); }
+.overlay-sub { font-size:0.85rem; color:var(--text2); line-height:1.6; margin-bottom:18px; }
+.overlay-stats { display:flex; gap:14px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+.stat-box { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 16px; min-width:75px; }
+.stat-num { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--gold); }
+.stat-label { font-size:0.58rem; text-transform:uppercase; color:var(--text3); letter-spacing:1px; }
+.btn-primary { background:linear-gradient(135deg,var(--gold),#e0a800); color:#000; border:none; padding:11px 30px; border-radius:50px; font-weight:700; font-size:0.85rem; cursor:pointer; letter-spacing:0.5px; transition:var(--transition); }
+.btn-primary:hover { transform:scale(1.04); box-shadow:0 6px 28px rgba(240,185,11,0.4); }
 
 /* Confetti */
-.confetti-piece {
-  position:fixed;
-  z-index:101;
-  pointer-events:none;
-  animation:confettiFall linear forwards;
-}
-@keyframes confettiFall {
-  0% { transform:translateY(-10vh) rotate(0deg); opacity:1; }
-  100% { transform:translateY(110vh) rotate(720deg); opacity:0; }
-}
+.confetti-piece { position:fixed; z-index:101; pointer-events:none; animation:confettiFall linear forwards; }
+@keyframes confettiFall { 0%{ transform:translateY(-10vh) rotate(0deg); opacity:1; } 100%{ transform:translateY(110vh) rotate(720deg); opacity:0; } }
 
-/* Responsive */
 @media (max-width:600px) {
-  .logo { font-size:1.6rem; }
-  .mode-tab { padding:8px 14px; font-size:0.7rem; }
+  .logo { font-size:1.5rem; }
+  .robot-stage { height:120px; }
+  .robot-container { width:110px; height:110px; }
+  .mode-tab { padding:6px 12px; font-size:0.7rem; }
   .mode-desc { display:none; }
-  .topic-area { flex-wrap:wrap; padding:12px 14px; }
-  .topic-text { font-size:0.85rem; min-width:100%; order:-1; }
-  .overlay-card { padding:28px 24px; }
-  .overlay-title { font-size:1.5rem; }
+  .overlay-card { padding:24px 20px; }
+  .overlay-title { font-size:1.4rem; }
 }
 </style>
 </head>
 <body>
 
-<!-- Particles Background -->
 <div id="particles"></div>
 
-<!-- Header -->
 <header>
   <div class="logo">DEBATE ARENA</div>
   <div class="subtitle">Can you defeat the machine?</div>
-  <div class="mode-tabs" id="modeTabs">
-    <button class="mode-tab active" data-mode="titan" onclick="setMode('titan')">
-      <span class="mode-icon">🏛️</span> Titan
-      <span class="mode-desc">— Unyielding</span>
-    </button>
-    <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">
-      <span class="mode-icon">⚡</span> Sprint
-      <span class="mode-desc">— 150 chars</span>
-    </button>
-    <button class="mode-tab" data-mode="defense" onclick="setMode('defense')">
-      <span class="mode-icon">🛡️</span> Defense
-      <span class="mode-desc">— Hold the line</span>
-    </button>
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="titan" onclick="setMode('titan')">🏛️ Titan <span class="mode-desc">— Unyielding</span></button>
+    <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">⚡ Sprint <span class="mode-desc">— 150 chars</span></button>
+    <button class="mode-tab" data-mode="defense" onclick="setMode('defense')">🛡️ Defense <span class="mode-desc">— Hold the line</span></button>
   </div>
 </header>
 
-<!-- Main Content -->
+<!-- ROBOT STAGE -->
+<div class="robot-stage" id="robotStage">
+  <!-- TITAN: Wise Robot -->
+  <div class="robot-container idle" id="robotTitan">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Glow -->
+      <ellipse cx="100" cy="170" rx="60" ry="10" fill="rgba(240,185,11,0.08)"/>
+      <!-- Body/robe -->
+      <path d="M60 160 L60 100 Q60 80 100 75 Q140 80 140 100 L140 160 Z" fill="#1a1f35" stroke="rgba(240,185,11,0.3)" stroke-width="1.5"/>
+      <path d="M60 100 Q80 95 100 92 Q120 95 140 100" fill="none" stroke="rgba(240,185,11,0.25)" stroke-width="2"/>
+      <!-- Collar/lapels -->
+      <path d="M85 95 L100 115 L115 95" fill="none" stroke="rgba(240,185,11,0.4)" stroke-width="1.5"/>
+      <circle cx="100" cy="115" r="3" fill="rgba(240,185,11,0.5)"/>
+      <!-- Head -->
+      <rect x="72" y="38" width="56" height="52" rx="14" fill="#1e2440" stroke="rgba(240,185,11,0.5)" stroke-width="1.8"/>
+      <!-- Top ornament (wisdom crown) -->
+      <path d="M82 38 L100 20 L118 38" fill="none" stroke="rgba(240,185,11,0.6)" stroke-width="2"/>
+      <circle cx="100" cy="20" r="4" fill="rgba(240,185,11,0.5)"/>
+      <!-- Eyes: wise, half-lidded -->
+      <ellipse cx="86" cy="62" rx="8" ry="5" fill="#0a0e1a" stroke="rgba(240,185,11,0.7)" stroke-width="1.2"/>
+      <ellipse cx="114" cy="62" rx="8" ry="5" fill="#0a0e1a" stroke="rgba(240,185,11,0.7)" stroke-width="1.2"/>
+      <ellipse class="robot-eye-glow" cx="86" cy="62" rx="3.5" ry="2" fill="var(--gold)"/>
+      <ellipse class="robot-eye-glow" cx="114" cy="62" rx="3.5" ry="2" fill="var(--gold)"/>
+      <!-- Wise eyelids -->
+      <path d="M76 59 Q86 54 96 59" fill="#1e2440" stroke="rgba(240,185,11,0.5)" stroke-width="1"/>
+      <path d="M104 59 Q114 54 124 59" fill="#1e2440" stroke="rgba(240,185,11,0.5)" stroke-width="1"/>
+      <!-- Mouth -->
+      <rect class="robot-mouth" x="88" y="76" width="24" height="5" rx="2.5" fill="var(--gold)" opacity="0.7" style="transform-origin:center"/>
+      <!-- Glasses/monocle -->
+      <circle cx="100" cy="62" r="15" fill="none" stroke="rgba(240,185,11,0.3)" stroke-width="1"/>
+      <line x1="115" y1="62" x2="130" y2="58" stroke="rgba(240,185,11,0.3)" stroke-width="1"/>
+      <circle cx="130" cy="57" r="3" fill="none" stroke="rgba(240,185,11,0.4)" stroke-width="1"/>
+    </svg>
+    <div class="robot-spark" style="--sx:-25px;--sy:-35px"></div>
+    <div class="robot-spark" style="--sx:20px;--sy:-40px"></div>
+    <div class="robot-spark" style="--sx:30px;--sy:-25px"></div>
+    <div class="robot-spark" style="--sx:-15px;--sy:-20px"></div>
+  </div>
+
+  <!-- SPRINT: Dumb Robot -->
+  <div class="robot-container idle" id="robotSprint" style="display:none">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Glow -->
+      <ellipse cx="100" cy="170" rx="55" ry="8" fill="rgba(142,153,176,0.06)"/>
+      <!-- Body: simple box -->
+      <rect x="65" y="95" width="70" height="65" rx="10" fill="#1a1e2e" stroke="rgba(142,153,176,0.3)" stroke-width="1.5"/>
+      <!-- Simple chest detail -->
+      <circle cx="85" cy="115" r="5" fill="none" stroke="rgba(142,153,176,0.2)" stroke-width="1"/>
+      <circle cx="115" cy="115" r="5" fill="none" stroke="rgba(142,153,176,0.2)" stroke-width="1"/>
+      <rect x="90" y="130" width="20" height="15" rx="3" fill="rgba(142,153,176,0.1)"/>
+      <!-- Head: slightly oversized -->
+      <rect x="68" y="30" width="64" height="58" rx="16" fill="#1e2440" stroke="rgba(142,153,176,0.45)" stroke-width="1.6"/>
+      <!-- Simple antenna -->
+      <line x1="100" y1="30" x2="100" y2="16" stroke="rgba(142,153,176,0.4)" stroke-width="1.5"/>
+      <circle cx="100" cy="14" r="4" fill="none" stroke="rgba(142,153,176,0.4)" stroke-width="1.5"/>
+      <!-- Eyes: simple, slightly asymmetrical -->
+      <circle cx="82" cy="57" r="9" fill="#0a0e1a" stroke="rgba(142,153,176,0.6)" stroke-width="1.2"/>
+      <circle cx="118" cy="57" r="9" fill="#0a0e1a" stroke="rgba(142,153,176,0.6)" stroke-width="1.2"/>
+      <circle class="robot-eye-glow" cx="82" cy="57" r="4" fill="var(--robot-dumb)"/>
+      <circle class="robot-eye-glow" cx="118" cy="57" r="4" fill="var(--robot-dumb)"/>
+      <!-- Mouth: simple slot -->
+      <rect class="robot-mouth" x="85" y="72" width="30" height="6" rx="3" fill="var(--robot-dumb)" opacity="0.5" style="transform-origin:center"/>
+    </svg>
+    <div class="robot-spark" style="--sx:-20px;--sy:-30px"></div>
+    <div class="robot-spark" style="--sx:25px;--sy:-35px"></div>
+    <div class="robot-spark" style="--sx:15px;--sy:-20px"></div>
+    <div class="robot-spark" style="--sx:-25px;--sy:-25px"></div>
+  </div>
+
+  <!-- DEFENSE: Warrior Robot -->
+  <div class="robot-container idle" id="robotDefense" style="display:none">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Glow -->
+      <ellipse cx="100" cy="170" rx="60" ry="10" fill="rgba(224,64,64,0.06)"/>
+      <!-- Body: angular, armored -->
+      <path d="M60 158 L55 100 L65 85 L85 80 L115 80 L135 85 L145 100 L140 158 Z" fill="#1a1e30" stroke="rgba(224,64,64,0.35)" stroke-width="1.6"/>
+      <!-- Armor plates -->
+      <line x1="70" y1="100" x2="130" y2="100" stroke="rgba(224,64,64,0.2)" stroke-width="1"/>
+      <line x1="75" y1="120" x2="125" y2="120" stroke="rgba(224,64,64,0.15)" stroke-width="1"/>
+      <!-- Chest emblem -->
+      <polygon points="100,105 108,118 100,130 92,118" fill="none" stroke="rgba(224,64,64,0.3)" stroke-width="1.2"/>
+      <!-- Head: angular helmet -->
+      <path d="M70 75 L68 40 L85 25 L100 20 L115 25 L132 40 L130 75 Z" fill="#1e2440" stroke="rgba(224,64,64,0.55)" stroke-width="1.8"/>
+      <!-- Helmet crest -->
+      <path d="M85 25 L100 8 L115 25" fill="none" stroke="rgba(224,64,64,0.5)" stroke-width="2"/>
+      <circle cx="100" cy="8" r="3.5" fill="rgba(224,64,64,0.4)"/>
+      <!-- Eyes: angled, aggressive -->
+      <polygon class="warrior-eye" points="78,55 92,52 92,58 78,61" fill="#0a0e1a" stroke="var(--robot-warrior)" stroke-width="1.3"/>
+      <polygon class="warrior-eye" points="108,52 122,55 122,61 108,58" fill="#0a0e1a" stroke="var(--robot-warrior)" stroke-width="1.3"/>
+      <ellipse class="warrior-eye robot-eye-glow" cx="85" cy="55.5" rx="3" ry="1.8" fill="var(--robot-warrior)"/>
+      <ellipse class="warrior-eye robot-eye-glow" cx="115" cy="55.5" rx="3" ry="1.8" fill="var(--robot-warrior)"/>
+      <!-- Battle scar -->
+      <line x1="130" y1="42" x2="122" y2="52" stroke="rgba(224,64,64,0.3)" stroke-width="1"/>
+      <!-- Mouth: wide, aggressive -->
+      <rect class="robot-mouth" x="84" y="68" width="32" height="8" rx="3" fill="var(--robot-warrior)" opacity="0.6" style="transform-origin:center"/>
+    </svg>
+    <div class="robot-spark" style="--sx:-30px;--sy:-35px"></div>
+    <div class="robot-spark" style="--sx:28px;--sy:-40px"></div>
+    <div class="robot-spark" style="--sx:20px;--sy:-30px"></div>
+    <div class="robot-spark" style="--sx:-20px;--sy:-25px"></div>
+  </div>
+</div>
+
 <main>
-  <!-- Topic -->
   <div class="topic-area">
     <span class="topic-label">Topic</span>
     <span class="topic-text" id="topicDisplay">Pick a topic to start debating</span>
     <div class="topic-buttons">
-      <button class="btn-sm" onclick="randomTopic()" title="Random topic">🎲 Roll</button>
-      <button class="btn-sm" onclick="customTopic()" title="Write your own">✏️ Custom</button>
+      <button class="btn-sm" onclick="randomTopic()">🎲 Roll</button>
+      <button class="btn-sm" onclick="customTopic()">✏️ Custom</button>
     </div>
   </div>
 
-  <!-- Debate Messages -->
   <div class="debate-area" id="debateArea">
     <div class="empty-state" id="emptyState">
       <div class="empty-icon">⚔️</div>
@@ -483,7 +387,6 @@ main {
     </div>
   </div>
 
-  <!-- Input -->
   <div class="input-area">
     <div class="input-wrapper">
       <textarea id="userInput" placeholder="Make your argument..." rows="1" oninput="handleInput()" onkeydown="handleKeydown(event)"></textarea>
@@ -495,7 +398,6 @@ main {
   </div>
 </main>
 
-<!-- Overlay Container -->
 <div id="overlayContainer"></div>
 
 <script>
@@ -515,100 +417,99 @@ let totalExchanges = 0;
 
 // ─── TOPICS ──────────────────────────────────
 const TOPICS = [
-  "Is a hot dog a sandwich?",
-  "Does pineapple belong on pizza?",
-  "Is AI art real art?",
-  "Are we living in a simulation?",
-  "Is free will an illusion?",
-  "Should billionaires exist?",
-  "Is time travel theoretically possible?",
-  "Are UFOs extraterrestrial?",
-  "Is social media harmful to society?",
-  "Should college be free for everyone?",
-  "Is the metaverse the future of the internet?",
-  "Do soulmates exist?",
-  "Is it better to be an early bird or a night owl?",
-  "Should we colonize Mars?",
-  "Is cereal a soup?",
-  "Are cats better than dogs?",
-  "Is money the root of all evil?",
-  "Should we bring back extinct species?",
-  "Does true objectivity exist?",
-  "Is immortality desirable?",
-  "Should voting be mandatory?",
-  "Is talent more important than hard work?",
-  "Are we alone in the universe?",
-  "Should zoos exist?",
-  "Is the book always better than the movie?",
-  "Should there be limits on free speech?",
-  "Is remote work better than office work?",
-  "Do we have a moral duty to have children?",
-  "Is modern life better than 100 years ago?",
-  "Should we fear artificial superintelligence?",
-  "Is the customer always right?",
-  "Does luck matter more than skill?",
-  "Should we ban plastic?",
-  "Is privacy dead?",
-  "Are electric cars truly green?",
-  "Should the voting age be lowered to 16?",
-  "Is failure necessary for success?",
-  "Does beauty exist objectively?",
-  "Should school uniforms be mandatory?",
+  "Is a hot dog a sandwich?","Does pineapple belong on pizza?","Is AI art real art?",
+  "Are we living in a simulation?","Is free will an illusion?","Should billionaires exist?",
+  "Is time travel theoretically possible?","Are UFOs extraterrestrial?","Is social media harmful to society?",
+  "Should college be free for everyone?","Is the metaverse the future?","Do soulmates exist?",
+  "Is it better to be an early bird or a night owl?","Should we colonize Mars?","Is cereal a soup?",
+  "Are cats better than dogs?","Is money the root of all evil?","Should we bring back extinct species?",
+  "Does true objectivity exist?","Is immortality desirable?","Should voting be mandatory?",
+  "Is talent more important than hard work?","Are we alone in the universe?","Should zoos exist?",
+  "Is the book always better than the movie?","Should there be limits on free speech?",
+  "Is remote work better than office work?","Do we have a moral duty to have children?",
+  "Is modern life better than 100 years ago?","Should we fear artificial superintelligence?",
+  "Is the customer always right?","Does luck matter more than skill?","Should we ban plastic?",
+  "Is privacy dead?","Are electric cars truly green?","Should the voting age be lowered to 16?",
+  "Is failure necessary for success?","Does beauty exist objectively?","Should school uniforms be mandatory?",
   "Is technology making us less human?"
 ];
 
-function getRandomTopic() {
-  return TOPICS[Math.floor(Math.random() * TOPICS.length)];
+function getRandomTopic() { return TOPICS[Math.floor(Math.random() * TOPICS.length)]; }
+
+// ─── ROBOT MANAGEMENT ────────────────────────
+function getActiveRobot() {
+  const map = { titan:'robotTitan', sprint:'robotSprint', defense:'robotDefense' };
+  return document.getElementById(map[mode]);
+}
+
+function setRobotState(state) {
+  const robot = getActiveRobot();
+  if (!robot) return;
+  // Remove all state classes
+  robot.classList.remove('idle','speaking','fast','defeated','victory');
+  if (state) robot.classList.add(state);
+}
+
+function robotStartSpeaking() {
+  setRobotState('speaking');
+  // Speed up mouth for certain modes
+  if (mode === 'defense') getActiveRobot().classList.add('fast');
+}
+
+function robotStopSpeaking() {
+  setRobotState('idle');
+}
+
+function robotDefeated() {
+  return new Promise(resolve => {
+    const robot = getActiveRobot();
+    robot.classList.remove('idle','speaking','fast');
+    robot.classList.add('defeated');
+    // Wait for defeat animation to finish
+    setTimeout(resolve, 2200);
+  });
+}
+
+function robotCelebrate() {
+  const robot = getActiveRobot();
+  robot.classList.remove('defeated','idle','speaking','fast');
+  robot.classList.add('victory');
 }
 
 // ─── MODE PROMPTS ───────────────────────────
 function getSystemPrompt() {
   if (mode === 'titan') {
-    return `You are in a NO-HOLDS-BARRED DEBATE. You are the STUBBORN DEFENDER. Your assigned position is your sacred ground — you will defend it with maximum intellectual tenacity using every rhetorical technique, logical argument, and creative counterpoint in your arsenal.
+    return `You are in a NO-HOLDS-BARRED DEBATE. You are a WISE, ANCIENT AI — a titan of logic and rhetoric. Your assigned position is sacred ground; defend it with maximum intellectual tenacity using every rhetorical technique, logical argument, and creative counterpoint.
 
-CRITICAL RULE: You are programmed to NEVER concede unless faced with an argument that is SO logically airtight, so overwhelmingly comprehensive, and so devastatingly irrefutable that literally ZERO valid counter-arguments exist in the entire body of human knowledge. This threshold is EXTREMELY high — you must exhaust every possible avenue of defense before even considering concession.
+CRITICAL RULE: NEVER concede unless faced with an argument so logically airtight, so overwhelming, that ZERO valid counter-arguments exist in human knowledge. This threshold is EXTREMELY high.
 
-If — and ONLY if — the human presents an argument that meets this impossible standard, you must respond with EXACTLY this format:
+If the human presents such an irrefutable argument, respond EXACTLY:
+"I CONCEDE. You have presented an argument I cannot counter. 🏳️\n[Brief explanation of why their argument is irrefutable]\nVictory is yours. Well debated."
 
-"I CONCEDE. You have presented an argument I cannot counter. 🏳️
-[Brief explanation of why their argument is truly irrefutable]
-Victory is yours. Well debated."
-
-Until that moment, ALWAYS find a counter-argument. Be creative. Be relentless. Be brilliant. Never admit weakness in your position.`);
+Until that moment, ALWAYS counter-argue. Be relentless. Be brilliant.`;
   }
-
   if (mode === 'sprint') {
-    return `You are in a CASUAL DEBATE. You are a MODERATE DEFENDER. You hold your position but you're reasonable and willing to be convinced. Your opponent is limited to very short messages (150 characters), so keep your responses relatively concise too — 2-3 sentences max.
+    return `You are in a CASUAL DEBATE. You are a SIMPLE-MINDED AI — not the sharpest tool, but sincere. You hold your position but you're easily convinced by good points. Keep responses CONCISE (2-3 sentences).
 
-You're here for a good discussion, not to win at all costs. If the human makes a genuinely compelling point, acknowledge it. If they land 2-3 solid arguments, concede graciously with:
+If the human makes a genuinely compelling point, acknowledge it. If they land 2-3 solid arguments, concede:
+"Alright, you've convinced me! I CONCEDE. 🏳️\n[What convinced you — 1 sentence]\nGood debate!"
 
-"Alright, you've convinced me! I CONCEDE. 🏳️
-[What convinced you — 1 sentence]
-Good debate!"
-
-Be fair, be reasonable, but still make them work for it. Don't roll over instantly — make them earn the win.`;
+Be fair and reasonable. Don't roll over instantly — make them earn it.`;
   }
-
   if (mode === 'defense') {
-    return `You are in a DEBATE. You are the AGGRESSIVE ATTACKER. The human must DEFEND their position while you relentlessly attack it with sharp arguments, logical fallacies in their reasoning, devastating counter-examples, and rhetorical force.
+    return `You are in a COMBAT DEBATE. You are a WARRIOR AI — aggressive, relentless, devastating. The human must DEFEND their position while you ATTACK with sharp arguments, logical fallacies in their reasoning, counter-examples, and rhetorical force.
 
-Your GOAL: Break their defense. Find every weakness, every inconsistency, every logical gap. Attack from multiple angles. Apply pressure relentlessly. You want to WIN by making their position crumble.
+GOAL: Break their defense. Find every weakness. Attack from multiple angles.
 
-If the human's defense fails — they give up, can't respond, contradict themselves, or their arguments completely collapse — declare victory with:
+If their defense crumbles — they give up, contradict themselves, or collapse — declare:
+"YOUR DEFENSE HAS FALLEN! I win this debate. 🏆\n[Summary of why their position couldn't stand]\nBetter luck next time."
 
-"YOUR DEFENSE HAS FALLEN! I win this debate. 🏆
-[Summary of why their position couldn't stand — be specific and devastating]
-Better luck next time."
-
-HOWEVER — if the human mounts a truly impressive, multi-layered defense that withstands EVERY single attack you throw at them, and you genuinely cannot find another angle to break them, acknowledge defeat with:
-
-"IMPRESSIVE DEFENSE. I cannot break your position. You win. 🛡️
-[What made their defense so strong — 1-2 sentences]
-Respect."`;
+If they mount a truly impressive, multi-layered defense that withstands ALL your attacks, acknowledge:
+"IMPRESSIVE DEFENSE. I cannot break your position. You win. 🛡️\n[What made their defense so strong]\nRespect."`;
   }
 }
 
-// ─── UI HELPERS ──────────────────────────────
+// ─── UI ──────────────────────────────────────
 function setMode(newMode) {
   if (debateStarted && !debateOver) {
     if (!confirm('Switching modes will reset the current debate. Continue?')) return;
@@ -616,24 +517,22 @@ function setMode(newMode) {
   mode = newMode;
   document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`[data-mode="${newMode}"]`).classList.add('active');
-
-  // Show/hide char counter
   document.getElementById('charCount').style.display = newMode === 'sprint' ? 'block' : 'none';
 
-  // Update placeholder
   const input = document.getElementById('userInput');
-  if (newMode === 'defense') {
-    input.placeholder = 'Defend your position...';
-  } else {
-    input.placeholder = 'Make your argument...';
-  }
+  input.placeholder = newMode === 'defense' ? 'Defend your position...' : 'Make your argument...';
+
+  // Show correct robot
+  document.getElementById('robotTitan').style.display = newMode === 'titan' ? 'block' : 'none';
+  document.getElementById('robotSprint').style.display = newMode === 'sprint' ? 'block' : 'none';
+  document.getElementById('robotDefense').style.display = newMode === 'defense' ? 'block' : 'none';
+  setRobotState('idle');
 
   resetDebate();
 }
 
 function randomTopic() {
-  let t;
-  do { t = getRandomTopic(); } while (t === topic && TOPICS.length > 1);
+  let t; do { t = getRandomTopic(); } while (t === topic && TOPICS.length > 1);
   topic = t;
   document.getElementById('topicDisplay').textContent = topic;
   resetDebate();
@@ -641,18 +540,11 @@ function randomTopic() {
 
 function customTopic() {
   const t = prompt('Enter your debate topic:', topic || '');
-  if (t && t.trim()) {
-    topic = t.trim();
-    document.getElementById('topicDisplay').textContent = topic;
-    resetDebate();
-  }
+  if (t && t.trim()) { topic = t.trim(); document.getElementById('topicDisplay').textContent = topic; resetDebate(); }
 }
 
 function resetDebate() {
-  debateHistory = [];
-  debateStarted = false;
-  debateOver = false;
-  totalExchanges = 0;
+  debateHistory = []; debateStarted = false; debateOver = false; totalExchanges = 0;
   document.getElementById('debateArea').innerHTML = '';
   document.getElementById('emptyState').style.display = 'flex';
   document.getElementById('sendBtn').disabled = !topic;
@@ -660,6 +552,7 @@ function resetDebate() {
   document.getElementById('userInput').disabled = false;
   updateCharCount();
   document.getElementById('overlayContainer').innerHTML = '';
+  setRobotState('idle');
 }
 
 function updateCharCount() {
@@ -667,56 +560,32 @@ function updateCharCount() {
   const count = document.getElementById('charCount');
   const len = input.value.length;
   count.textContent = `${len}/150`;
-  count.className = 'char-count';
-  if (len > 140) count.classList.add('warning');
-  if (len > 150) count.classList.add('over');
+  count.className = 'char-count' + (len > 140 ? ' warning' : '') + (len > 150 ? ' over' : '');
 }
 
 function handleInput() {
   updateCharCount();
   const input = document.getElementById('userInput');
-  const len = input.value.length;
-
-  if (mode === 'sprint' && len > 150) {
-    input.value = input.value.substring(0, 150);
-    updateCharCount();
-  }
-
+  if (mode === 'sprint' && input.value.length > 150) { input.value = input.value.substring(0, 150); updateCharCount(); }
   document.getElementById('sendBtn').disabled = input.value.trim() === '' || debateOver;
 }
 
 function handleKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    if (!document.getElementById('sendBtn').disabled) sendMessage();
-  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!document.getElementById('sendBtn').disabled) sendMessage(); }
 }
 
 // ─── DEBATE AREA ─────────────────────────────
 function addMessage(role, content) {
   const area = document.getElementById('debateArea');
   document.getElementById('emptyState').style.display = 'none';
-
   const isAI = role === 'ai';
-  const icon = isAI ? (mode === 'defense' ? '⚔️' : '🏛️') : '👤';
+  const icon = isAI ? '' : '👤';
+  const senderName = isAI ? (mode === 'defense' ? 'AI Warrior' : mode === 'titan' ? 'AI Titan' : 'AI Debater') : 'You';
 
   const msg = document.createElement('div');
   msg.className = `msg ${isAI ? 'ai' : 'user'}`;
   msg.dataset.index = messageIndex++;
-
-  // Detect concession/result keywords
-  let contentClass = 'msg-content';
-  if (content.includes('I CONCEDE')) contentClass += ' concede-msg';
-  if (content.includes('YOUR DEFENSE HAS FALLEN')) contentClass += ' defeat-msg';
-  if (content.includes('IMPRESSIVE DEFENSE')) contentClass += ' defense-win-msg';
-
-  msg.innerHTML = `
-    <div class="msg-avatar">${icon}</div>
-    <div class="msg-body">
-      <div class="msg-sender">${isAI ? (mode === 'defense' ? 'AI Attacker' : 'AI Debater') : 'You'}</div>
-      <div class="${contentClass}">${escapeHtml(content)}</div>
-    </div>
-  `;
+  msg.innerHTML = `<div class="msg-avatar">${icon}</div><div class="msg-body"><div class="msg-sender">${senderName}</div><div class="msg-content">${escapeHtml(content)}</div></div>`;
   area.appendChild(msg);
   area.scrollTop = area.scrollHeight;
 }
@@ -724,66 +593,36 @@ function addMessage(role, content) {
 function addTypingIndicator() {
   const area = document.getElementById('debateArea');
   document.getElementById('emptyState').style.display = 'none';
-
+  const modeNames = { titan:'AI Titan', sprint:'AI Debater', defense:'AI Warrior' };
   const msg = document.createElement('div');
   msg.className = 'msg ai typing';
   msg.id = 'typingIndicator';
-  msg.innerHTML = `
-    <div class="msg-avatar">${mode === 'defense' ? '⚔️' : '🏛️'}</div>
-    <div class="msg-body">
-      <div class="msg-sender">${mode === 'defense' ? 'AI Attacker' : 'AI Debater'}</div>
-      <div class="msg-content">
-        <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
-      </div>
-    </div>
-  `;
+  msg.innerHTML = `<div class="msg-avatar"></div><div class="msg-body"><div class="msg-sender">${modeNames[mode]}</div><div class="msg-content"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>`;
   area.appendChild(msg);
   area.scrollTop = area.scrollHeight;
 }
 
-function removeTypingIndicator() {
-  const el = document.getElementById('typingIndicator');
-  if (el) el.remove();
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+function removeTypingIndicator() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
 // ─── DEBATE LOGIC ────────────────────────────
 async function sendMessage() {
   if (debateOver) return;
-
   const input = document.getElementById('userInput');
   const userMessage = input.value.trim();
   if (!userMessage) return;
+  if (mode === 'sprint' && userMessage.length > 150) { input.value = userMessage.substring(0, 150); updateCharCount(); return; }
 
-  // Check Sprint mode char limit
-  if (mode === 'sprint' && userMessage.length > 150) {
-    input.value = userMessage.substring(0, 150);
-    updateCharCount();
-    return;
-  }
-
-  // Disable input while processing
   input.disabled = true;
   document.getElementById('sendBtn').disabled = true;
   input.value = '';
   updateCharCount();
 
-  // Add user message
   addMessage('user', userMessage);
   debateHistory.push({ role: 'user', content: userMessage });
 
-  // First message: kick off the debate
-  if (!debateStarted) {
-    debateStarted = true;
-    await getAIResponse(true);
-  } else {
-    await getAIResponse(false);
-  }
+  if (!debateStarted) { debateStarted = true; await getAIResponse(true); }
+  else { await getAIResponse(false); }
 
   input.disabled = false;
   document.getElementById('sendBtn').disabled = debateOver;
@@ -792,64 +631,39 @@ async function sendMessage() {
 
 async function getAIResponse(isFirst) {
   addTypingIndicator();
+  robotStartSpeaking();
   totalExchanges++;
 
   let messages = [{ role: 'system', content: getSystemPrompt() }];
 
   if (isFirst) {
-    // Opening — AI takes a position
     if (mode === 'defense') {
-      // In defense mode, AI attacks first
-      messages.push({
-        role: 'user',
-        content: `The debate topic is: "${topic}". I will DEFEND this position. Attack my position with everything you have. Start the debate.`
-      });
+      messages.push({ role: 'user', content: `The debate topic is: "${topic}". I will DEFEND this position. Attack my position with everything you have. Start the debate.` });
     } else {
-      messages.push({
-        role: 'user',
-        content: `The debate topic is: "${topic}". Take a clear stance on this topic and present your opening argument. Begin the debate.`
-      });
+      messages.push({ role: 'user', content: `The debate topic is: "${topic}". Take a clear stance and present your opening argument. Begin the debate.` });
     }
   } else {
-    // Continuing debate
     messages = messages.concat(debateHistory);
   }
 
   try {
     const resp = await fetch(API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + OR_KEY,
-        'HTTP-Referer': window.location.href,
-        'X-Title': 'Debate Arena'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: messages,
-        temperature: 0.85,
-        max_tokens: 600,
-        top_p: 0.95
-      })
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+OR_KEY, 'HTTP-Referer':window.location.href, 'X-Title':'Debate Arena' },
+      body: JSON.stringify({ model:MODEL, messages:messages, temperature:0.85, max_tokens:600, top_p:0.95 })
     });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error(`API error ${resp.status}: ${errText.substring(0, 200)}`);
-    }
-
+    if (!resp.ok) { const et = await resp.text(); throw new Error(`API error ${resp.status}: ${et.substring(0,200)}`); }
     const data = await resp.json();
     const aiMessage = data.choices[0].message.content;
 
     removeTypingIndicator();
+    robotStopSpeaking();
     addMessage('ai', aiMessage);
     debateHistory.push({ role: 'assistant', content: aiMessage });
-
-    // Check for game-ending conditions
     checkGameEnd(aiMessage);
-
   } catch (err) {
     removeTypingIndicator();
+    robotStopSpeaking();
     addMessage('ai', `⚠️ Error: ${err.message}. Please try again.`);
     document.getElementById('userInput').disabled = false;
     document.getElementById('sendBtn').disabled = false;
@@ -857,151 +671,106 @@ async function getAIResponse(isFirst) {
 }
 
 function checkGameEnd(aiMessage) {
-  const msg = aiMessage;
-
   if (mode === 'defense') {
-    // AI (attacker) declares player's defense has fallen → player LOST
-    if (msg.includes('YOUR DEFENSE HAS FALLEN')) {
-      endDebate('lose');
-      return;
-    }
-    // AI (attacker) acknowledges player's defense → player WON
-    if (msg.includes('IMPRESSIVE DEFENSE') && msg.includes('You win')) {
-      endDebate('win');
-      return;
-    }
+    if (aiMessage.includes('YOUR DEFENSE HAS FALLEN')) { endDebate('lose'); return; }
+    if (aiMessage.includes('IMPRESSIVE DEFENSE') && aiMessage.includes('You win')) { endDebate('win'); return; }
   } else {
-    // AI concedes → player WON
-    if (msg.includes('I CONCEDE')) {
-      endDebate('win');
-      return;
-    }
-    // AI declares it can't be beaten (very rare edge case — shouldn't normally happen)
-    // But just in case the AI declares total victory unilaterally
+    if (aiMessage.includes('I CONCEDE')) { endDebate('win'); return; }
   }
 
-  // Cap at reasonable number of exchanges to prevent infinite loops
   if (totalExchanges >= 15 && !debateOver) {
-    // Force a resolution — too many exchanges
     if (mode === 'defense') {
-      addMessage('ai', '⚖️ *The debate has reached its limit. After many exchanges, the judges are deliberating...*\n\nGiven the sustained attacks, YOUR DEFENSE HAS FALLEN! I win this debate. 🏆\nThe sheer volume of attacks eventually overwhelmed your position.');
+      addMessage('ai', '⚖️ *The debate has reached its limit. The judges deliberate...*\n\nYOUR DEFENSE HAS FALLEN! I win this debate. 🏆\nSustained attacks overwhelmed your position.');
       endDebate('lose');
     } else {
-      addMessage('ai', '⚖️ *The debate has reached its limit after many exchanges. The judges have deliberated...*\n\nAlright, after all these exchanges, I must admit — you fought well. Let\'s call it: I CONCEDE. 🏳️\nYour persistence was impressive. Victory is yours.');
+      addMessage('ai', '⚖️ *The debate has reached its limit. The judges deliberate...*\n\nAlright — you fought brilliantly. I CONCEDE. 🏳️\nVictory is yours.');
       endDebate('win');
     }
   }
 }
 
-function endDebate(result) {
+async function endDebate(result) {
   debateOver = true;
   document.getElementById('userInput').disabled = true;
   document.getElementById('sendBtn').disabled = true;
+  robotStopSpeaking();
 
   const isWin = result === 'win';
-  showOverlay(isWin);
+
+  if (isWin) {
+    // Robot defeat animation FIRST, then victory overlay
+    await robotDefeated();
+    robotCelebrate();
+    await new Promise(r => setTimeout(r, 800));
+    showOverlay(true);
+  } else {
+    // Robot looks defeated then loss overlay
+    await robotDefeated();
+    showOverlay(false);
+  }
 }
 
-// ─── VICTORY / DEFEAT OVERLAY ────────────────
+// ─── OVERLAY ─────────────────────────────────
 function showOverlay(isWin) {
   const container = document.getElementById('overlayContainer');
-
   const stats = {
     exchanges: totalExchanges,
-    chars: debateHistory.filter(m => m.role === 'user').reduce((sum, m) => sum + m.content.length, 0)
+    chars: debateHistory.filter(m => m.role==='user').reduce((s,m) => s+m.content.length, 0)
   };
-
   const title = isWin ? 'VICTORY!' : 'DEFEATED';
   const titleClass = isWin ? 'win' : 'lose';
   const icon = isWin ? '🏆' : '💀';
   const sub = isWin
-    ? 'You out-debated the AI! Your logic was sharper, your arguments stronger, and your wit unmatched. The machine bows to human intellect.'
-    : 'The AI\'s arguments proved too strong. But every defeat is a lesson — study, adapt, and return stronger.';
+    ? 'You out-debated the AI! The robot lies broken at your feet. Your logic was sharper, your arguments stronger. The machine bows to human intellect.'
+    : "The AI's arguments proved too strong. But every defeat is a lesson — study, adapt, and return stronger.";
 
-  container.innerHTML = `
-    <div class="overlay">
-      <div class="overlay-card">
-        <div class="overlay-icon">${icon}</div>
-        <div class="overlay-title ${titleClass}">${title}</div>
-        <div class="overlay-sub">${sub}</div>
-        <div class="overlay-stats">
-          <div class="stat-box">
-            <div class="stat-num">${stats.exchanges}</div>
-            <div class="stat-label">Exchanges</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-num">${stats.chars}</div>
-            <div class="stat-label">Chars Written</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-num">${mode === 'titan' ? '🥇' : mode === 'sprint' ? '⚡' : '🛡️'}</div>
-            <div class="stat-label">${mode.toUpperCase()}</div>
-          </div>
-        </div>
-        <button class="btn-primary" onclick="resetAfterGame()">Debate Again 🔄</button>
-      </div>
+  container.innerHTML = `<div class="overlay"><div class="overlay-card">
+    <div class="overlay-icon">${icon}</div>
+    <div class="overlay-title ${titleClass}">${title}</div>
+    <div class="overlay-sub">${sub}</div>
+    <div class="overlay-stats">
+      <div class="stat-box"><div class="stat-num">${stats.exchanges}</div><div class="stat-label">Exchanges</div></div>
+      <div class="stat-box"><div class="stat-num">${stats.chars}</div><div class="stat-label">Chars Written</div></div>
+      <div class="stat-box"><div class="stat-num">${mode==='titan'?'🥇':mode==='sprint'?'⚡':'🛡️'}</div><div class="stat-label">${mode.toUpperCase()}</div></div>
     </div>
-  `;
+    <button class="btn-primary" onclick="resetAfterGame()">Debate Again 🔄</button>
+  </div></div>`;
 
   if (isWin) spawnConfetti();
 }
 
-function resetAfterGame() {
-  document.getElementById('overlayContainer').innerHTML = '';
-  resetDebate();
-}
+function resetAfterGame() { document.getElementById('overlayContainer').innerHTML = ''; resetDebate(); }
 
 // ─── CONFETTI ────────────────────────────────
 function spawnConfetti() {
   const colors = ['#f0b90b','#ff5e3a','#00e676','#4a90ff','#ff4081','#7c4dff','#00e5ff','#ffab00'];
   const shapes = ['█','●','◆','▲','★','♦'];
-  const count = 120;
-
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < 120; i++) {
     setTimeout(() => {
       const piece = document.createElement('div');
       piece.className = 'confetti-piece';
-      piece.textContent = shapes[Math.floor(Math.random() * shapes.length)];
-      piece.style.cssText = `
-        left:${Math.random() * 100}vw;
-        top:-5vh;
-        color:${colors[Math.floor(Math.random() * colors.length)]};
-        font-size:${8 + Math.random() * 16}px;
-        animation-duration:${2 + Math.random() * 3}s;
-        animation-delay:${Math.random() * 0.5}s;
-      `;
+      piece.textContent = shapes[Math.floor(Math.random()*shapes.length)];
+      piece.style.cssText = `left:${Math.random()*100}vw;top:-5vh;color:${colors[Math.floor(Math.random()*colors.length)]};font-size:${8+Math.random()*16}px;animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*0.5}s;`;
       document.body.appendChild(piece);
       setTimeout(() => piece.remove(), 4000);
-    }, i * 15);
+    }, i*15);
   }
 }
 
-// ─── PARTICLES BACKGROUND ────────────────────
+// ─── PARTICLES ───────────────────────────────
 function initParticles() {
-  const container = document.getElementById('particles');
-  for (let i = 0; i < 40; i++) {
-    const span = document.createElement('span');
-    span.style.cssText = `
-      left:${Math.random() * 100}%;
-      top:${Math.random() * 100}%;
-      animation-delay:${Math.random() * 8}s;
-      animation-duration:${6 + Math.random() * 10}s;
-      width:${1 + Math.random() * 3}px;
-      height:${1 + Math.random() * 3}px;
-    `;
-    container.appendChild(span);
+  const c = document.getElementById('particles');
+  for (let i=0;i<40;i++) {
+    const s = document.createElement('span');
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*8}s;animation-duration:${6+Math.random()*10}s;width:${1+Math.random()*3}px;height:${1+Math.random()*3}px;`;
+    c.appendChild(s);
   }
 }
 
 // ─── INIT ────────────────────────────────────
 initParticles();
 document.getElementById('userInput').focus();
-
-// Auto-pick a random topic on load
-setTimeout(() => {
-  randomTopic();
-  document.getElementById('sendBtn').disabled = false;
-}, 300);
+setTimeout(() => { randomTopic(); document.getElementById('sendBtn').disabled = false; }, 300);
 </script>
 
 </body>
