@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEBATE ARENA — Face the AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06080f;
+  --bg2: #0c0f1a;
+  --card: #111522;
+  --border: #1e2240;
+  --gold: #f0b90b;
+  --gold-dim: #b8970a;
+  --fire: #ff5e3a;
+  --fire-glow: rgba(255,94,58,0.3);
+  --text: #e4e5f0;
+  --text2: #8b8fa3;
+  --text3: #5a5e72;
+  --accent-blue: #4a90ff;
+  --win-green: #00e676;
+  --lose-red: #ff1744;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body {
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* Background particles */
+#particles {
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  opacity:0.15;
+}
+#particles span {
+  position:absolute;
+  display:block;
+  width:2px; height:2px;
+  background:var(--gold);
+  border-radius:50%;
+  animation:float 8s infinite ease-in-out;
+}
+@keyframes float {
+  0%,100% { transform:translateY(0) scale(1); opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:1; }
+  50% { transform:translateY(-60vh) scale(1.5); }
+}
+
+/* Header */
+header {
+  position:relative; z-index:10;
+  padding:20px 24px 0;
+  text-align:center;
+  flex-shrink:0;
+}
+.logo {
+  font-family:'Playfair Display',serif;
+  font-size:2.2rem; font-weight:900;
+  background:linear-gradient(135deg, var(--gold), #ffaa00, var(--fire));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:2px;
+  margin-bottom:2px;
+}
+.subtitle {
+  font-size:0.75rem; color:var(--text3);
+  text-transform:uppercase; letter-spacing:4px;
+  margin-bottom:18px;
+}
+
+/* Mode Tabs */
+.mode-tabs {
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.mode-tab {
+  background:var(--card);
+  border:1px solid var(--border);
+  color:var(--text2);
+  padding:10px 18px;
+  border-radius:50px;
+  cursor:pointer;
+  font-size:0.8rem;
+  font-weight:600;
+  letter-spacing:0.5px;
+  transition:var(--transition);
+  display:flex; align-items:center; gap:6px;
+  white-space:nowrap;
+}
+.mode-tab:hover {
+  border-color:var(--gold-dim);
+  color:var(--text);
+}
+.mode-tab.active {
+  background:linear-gradient(135deg, rgba(240,185,11,0.15), rgba(255,94,58,0.1));
+  border-color:var(--gold);
+  color:var(--gold);
+  box-shadow:0 0 20px rgba(240,185,11,0.1);
+}
+.mode-icon { font-size:1.1rem; }
+.mode-desc {
+  font-size:0.65rem; color:var(--text3);
+  font-weight:400;
+}
+
+/* Main content */
+main {
+  position:relative; z-index:10;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  max-width:750px;
+  width:100%;
+  margin:0 auto;
+  padding:12px 20px 0;
+  overflow:hidden;
+  min-height:0;
+}
+
+/* Topic Area */
+.topic-area {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-shrink:0;
+  margin-bottom:12px;
+}
+.topic-label {
+  font-size:0.65rem; text-transform:uppercase;
+  color:var(--text3); letter-spacing:2px;
+  white-space:nowrap;
+}
+.topic-text {
+  flex:1;
+  font-size:0.95rem; font-weight:500;
+  color:var(--text);
+  min-width:0;
+}
+.topic-buttons {
+  display:flex; gap:6px;
+}
+.btn-sm {
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text2);
+  padding:6px 12px;
+  border-radius:50px;
+  cursor:pointer;
+  font-size:0.7rem; font-weight:600;
+  letter-spacing:0.5px;
+  transition:var(--transition);
+  white-space:nowrap;
+}
+.btn-sm:hover {
+  border-color:var(--gold-dim);
+  color:var(--gold);
+}
+
+/* Debate Area */
+.debate-area {
+  flex:1;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:4px 0;
+  min-height:0;
+  scroll-behavior:smooth;
+}
+.debate-area::-webkit-scrollbar { width:4px; }
+.debate-area::-webkit-scrollbar-track { background:transparent; }
+.debate-area::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+/* Messages */
+.msg {
+  display:flex;
+  gap:10px;
+  animation:slideIn 0.3s ease-out;
+  flex-shrink:0;
+}
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.msg-avatar {
+  width:36px; height:36px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem;
+  flex-shrink:0;
+}
+.msg.ai .msg-avatar {
+  background:linear-gradient(135deg, rgba(240,185,11,0.2), rgba(240,185,11,0.05));
+  border:1px solid var(--gold-dim);
+}
+.msg.user .msg-avatar {
+  background:linear-gradient(135deg, rgba(74,144,255,0.2), rgba(74,144,255,0.05));
+  border:1px solid var(--accent-blue);
+}
+.msg-body {
+  flex:1;
+  min-width:0;
+}
+.msg-sender {
+  font-size:0.7rem; font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:4px;
+}
+.msg.ai .msg-sender { color:var(--gold); }
+.msg.user .msg-sender { color:var(--accent-blue); }
+.msg-content {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+  font-size:0.9rem;
+  line-height:1.6;
+  color:var(--text);
+  white-space:pre-wrap;
+}
+.msg.user .msg-content {
+  border-color:rgba(74,144,255,0.2);
+}
+.msg.ai .msg-content {
+  border-color:rgba(240,185,11,0.15);
+}
+
+/* Typing indicator */
+.typing .msg-content {
+  display:flex; gap:4px; align-items:center; padding:18px 16px;
+}
+.typing-dot {
+  width:6px; height:6px;
+  background:var(--text3);
+  border-radius:50%;
+  animation:typingBounce 1.4s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay:0.2s; }
+.typing-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes typingBounce {
+  0%,60%,100% { transform:translateY(0); opacity:0.3; }
+  30% { transform:translateY(-6px); opacity:1; }
+}
+
+/* Empty state */
+.empty-state {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:var(--text3);
+  text-align:center;
+  gap:12px;
+  padding:40px;
+}
+.empty-icon { font-size:3rem; opacity:0.4; }
+.empty-title { font-size:1rem; font-weight:600; color:var(--text2); }
+.empty-sub { font-size:0.8rem; max-width:300px; line-height:1.5; }
+
+/* Input Area */
+.input-area {
+  flex-shrink:0;
+  padding:12px 0 16px;
+}
+.input-wrapper {
+  display:flex;
+  gap:8px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:6px;
+  transition:var(--transition);
+}
+.input-wrapper:focus-within {
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(240,185,11,0.05);
+}
+.input-wrapper textarea {
+  flex:1;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  font-size:0.85rem;
+  padding:8px 10px;
+  resize:none;
+  outline:none;
+  min-height:42px;
+  max-height:120px;
+  line-height:1.5;
+}
+.input-wrapper textarea::placeholder { color:var(--text3); }
+.input-meta {
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+  padding:4px 6px 4px 0;
+}
+.char-count {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;
+  color:var(--text3);
+  white-space:nowrap;
+}
+.char-count.warning { color:var(--fire); }
+.char-count.over { color:var(--lose-red); }
+.btn-send {
+  background:linear-gradient(135deg, var(--gold), #e0a800);
+  color:#000;
+  border:none;
+  padding:8px 20px;
+  border-radius:50px;
+  font-weight:700;
+  font-size:0.8rem;
+  cursor:pointer;
+  letter-spacing:0.5px;
+  transition:var(--transition);
+  white-space:nowrap;
+}
+.btn-send:hover { transform:scale(1.03); box-shadow:0 4px 20px rgba(240,185,11,0.3); }
+.btn-send:disabled {
+  opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none;
+}
+
+/* Overlay */
+.overlay {
+  position:fixed; inset:0;
+  background:rgba(6,8,15,0.92);
+  backdrop-filter:blur(10px);
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  animation:fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.overlay-card {
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:24px;
+  padding:40px 48px;
+  text-align:center;
+  max-width:480px;
+  width:90%;
+  animation:scaleIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes scaleIn {
+  from { transform:scale(0.8); opacity:0; }
+  to { transform:scale(1); opacity:1; }
+}
+.overlay-icon { font-size:4rem; margin-bottom:12px; }
+.overlay-title {
+  font-family:'Playfair Display',serif;
+  font-size:2rem; font-weight:900;
+  margin-bottom:8px;
+}
+.overlay-title.win { color:var(--win-green); }
+.overlay-title.lose { color:var(--lose-red); }
+.overlay-sub {
+  font-size:0.9rem; color:var(--text2);
+  line-height:1.6;
+  margin-bottom:20px;
+}
+.overlay-stats {
+  display:flex; gap:16px; justify-content:center;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+}
+.stat-box {
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:12px 18px;
+  min-width:80px;
+}
+.stat-num {
+  font-family:'Playfair Display',serif;
+  font-size:1.5rem; font-weight:700;
+  color:var(--gold);
+}
+.stat-label {
+  font-size:0.6rem; text-transform:uppercase;
+  color:var(--text3); letter-spacing:1px;
+}
+.btn-primary {
+  background:linear-gradient(135deg, var(--gold), #e0a800);
+  color:#000;
+  border:none;
+  padding:12px 32px;
+  border-radius:50px;
+  font-weight:700;
+  font-size:0.9rem;
+  cursor:pointer;
+  letter-spacing:0.5px;
+  transition:var(--transition);
+}
+.btn-primary:hover { transform:scale(1.04); box-shadow:0 6px 30px rgba(240,185,11,0.4); }
+
+/* Confetti */
+.confetti-piece {
+  position:fixed;
+  z-index:101;
+  pointer-events:none;
+  animation:confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% { transform:translateY(-10vh) rotate(0deg); opacity:1; }
+  100% { transform:translateY(110vh) rotate(720deg); opacity:0; }
+}
+
+/* Responsive */
+@media (max-width:600px) {
+  .logo { font-size:1.6rem; }
+  .mode-tab { padding:8px 14px; font-size:0.7rem; }
+  .mode-desc { display:none; }
+  .topic-area { flex-wrap:wrap; padding:12px 14px; }
+  .topic-text { font-size:0.85rem; min-width:100%; order:-1; }
+  .overlay-card { padding:28px 24px; }
+  .overlay-title { font-size:1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Particles Background -->
+<div id="particles"></div>
+
+<!-- Header -->
+<header>
+  <div class="logo">DEBATE ARENA</div>
+  <div class="subtitle">Can you defeat the machine?</div>
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="titan" onclick="setMode('titan')">
+      <span class="mode-icon">🏛️</span> Titan
+      <span class="mode-desc">— Unyielding</span>
+    </button>
+    <button class="mode-tab" data-mode="sprint" onclick="setMode('sprint')">
+      <span class="mode-icon">⚡</span> Sprint
+      <span class="mode-desc">— 150 chars</span>
+    </button>
+    <button class="mode-tab" data-mode="defense" onclick="setMode('defense')">
+      <span class="mode-icon">🛡️</span> Defense
+      <span class="mode-desc">— Hold the line</span>
+    </button>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main>
+  <!-- Topic -->
+  <div class="topic-area">
+    <span class="topic-label">Topic</span>
+    <span class="topic-text" id="topicDisplay">Pick a topic to start debating</span>
+    <div class="topic-buttons">
+      <button class="btn-sm" onclick="randomTopic()" title="Random topic">🎲 Roll</button>
+      <button class="btn-sm" onclick="customTopic()" title="Write your own">✏️ Custom</button>
+    </div>
+  </div>
+
+  <!-- Debate Messages -->
+  <div class="debate-area" id="debateArea">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">⚔️</div>
+      <div class="empty-title">Choose your battlefield</div>
+      <div class="empty-sub">Pick a mode above, roll a topic, and start debating. The AI is waiting.</div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-wrapper">
+      <textarea id="userInput" placeholder="Make your argument..." rows="1" oninput="handleInput()" onkeydown="handleKeydown(event)"></textarea>
+      <div class="input-meta">
+        <span class="char-count" id="charCount" style="display:none">0/150</span>
+        <button class="btn-send" id="sendBtn" onclick="sendMessage()" disabled>Send ⚡</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Overlay Container -->
+<div id="overlayContainer"></div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────
+const OR_KEY = atob('c2stb3ItdjEtM2MzNmNmMDgxYjQ4OGZkYjI0N2RiODA3MGFhOGNiODdlYzgzM2QzM2E4Mzg1NWVlZmFhNWQ1ODlmMGY1MTg0Yw==');
+const MODEL = 'google/gemma-4-26b-a4b-it:free';
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+// ─── STATE ───────────────────────────────────
+let mode = 'titan';
+let topic = null;
+let debateHistory = [];
+let debateStarted = false;
+let debateOver = false;
+let messageIndex = 0;
+let totalExchanges = 0;
+
+// ─── TOPICS ──────────────────────────────────
+const TOPICS = [
+  "Is a hot dog a sandwich?",
+  "Does pineapple belong on pizza?",
+  "Is AI art real art?",
+  "Are we living in a simulation?",
+  "Is free will an illusion?",
+  "Should billionaires exist?",
+  "Is time travel theoretically possible?",
+  "Are UFOs extraterrestrial?",
+  "Is social media harmful to society?",
+  "Should college be free for everyone?",
+  "Is the metaverse the future of the internet?",
+  "Do soulmates exist?",
+  "Is it better to be an early bird or a night owl?",
+  "Should we colonize Mars?",
+  "Is cereal a soup?",
+  "Are cats better than dogs?",
+  "Is money the root of all evil?",
+  "Should we bring back extinct species?",
+  "Does true objectivity exist?",
+  "Is immortality desirable?",
+  "Should voting be mandatory?",
+  "Is talent more important than hard work?",
+  "Are we alone in the universe?",
+  "Should zoos exist?",
+  "Is the book always better than the movie?",
+  "Should there be limits on free speech?",
+  "Is remote work better than office work?",
+  "Do we have a moral duty to have children?",
+  "Is modern life better than 100 years ago?",
+  "Should we fear artificial superintelligence?",
+  "Is the customer always right?",
+  "Does luck matter more than skill?",
+  "Should we ban plastic?",
+  "Is privacy dead?",
+  "Are electric cars truly green?",
+  "Should the voting age be lowered to 16?",
+  "Is failure necessary for success?",
+  "Does beauty exist objectively?",
+  "Should school uniforms be mandatory?",
+  "Is technology making us less human?"
+];
+
+function getRandomTopic() {
+  return TOPICS[Math.floor(Math.random() * TOPICS.length)];
+}
+
+// ─── MODE PROMPTS ───────────────────────────
+function getSystemPrompt() {
+  if (mode === 'titan') {
+    return `You are in a NO-HOLDS-BARRED DEBATE. You are the STUBBORN DEFENDER. Your assigned position is your sacred ground — you will defend it with maximum intellectual tenacity using every rhetorical technique, logical argument, and creative counterpoint in your arsenal.
+
+CRITICAL RULE: You are programmed to NEVER concede unless faced with an argument that is SO logically airtight, so overwhelmingly comprehensive, and so devastatingly irrefutable that literally ZERO valid counter-arguments exist in the entire body of human knowledge. This threshold is EXTREMELY high — you must exhaust every possible avenue of defense before even considering concession.
+
+If — and ONLY if — the human presents an argument that meets this impossible standard, you must respond with EXACTLY this format:
+
+"I CONCEDE. You have presented an argument I cannot counter. 🏳️
+[Brief explanation of why their argument is truly irrefutable]
+Victory is yours. Well debated."
+
+Until that moment, ALWAYS find a counter-argument. Be creative. Be relentless. Be brilliant. Never admit weakness in your position.`);
+  }
+
+  if (mode === 'sprint') {
+    return `You are in a CASUAL DEBATE. You are a MODERATE DEFENDER. You hold your position but you're reasonable and willing to be convinced. Your opponent is limited to very short messages (150 characters), so keep your responses relatively concise too — 2-3 sentences max.
+
+You're here for a good discussion, not to win at all costs. If the human makes a genuinely compelling point, acknowledge it. If they land 2-3 solid arguments, concede graciously with:
+
+"Alright, you've convinced me! I CONCEDE. 🏳️
+[What convinced you — 1 sentence]
+Good debate!"
+
+Be fair, be reasonable, but still make them work for it. Don't roll over instantly — make them earn the win.`;
+  }
+
+  if (mode === 'defense') {
+    return `You are in a DEBATE. You are the AGGRESSIVE ATTACKER. The human must DEFEND their position while you relentlessly attack it with sharp arguments, logical fallacies in their reasoning, devastating counter-examples, and rhetorical force.
+
+Your GOAL: Break their defense. Find every weakness, every inconsistency, every logical gap. Attack from multiple angles. Apply pressure relentlessly. You want to WIN by making their position crumble.
+
+If the human's defense fails — they give up, can't respond, contradict themselves, or their arguments completely collapse — declare victory with:
+
+"YOUR DEFENSE HAS FALLEN! I win this debate. 🏆
+[Summary of why their position couldn't stand — be specific and devastating]
+Better luck next time."
+
+HOWEVER — if the human mounts a truly impressive, multi-layered defense that withstands EVERY single attack you throw at them, and you genuinely cannot find another angle to break them, acknowledge defeat with:
+
+"IMPRESSIVE DEFENSE. I cannot break your position. You win. 🛡️
+[What made their defense so strong — 1-2 sentences]
+Respect."`;
+  }
+}
+
+// ─── UI HELPERS ──────────────────────────────
+function setMode(newMode) {
+  if (debateStarted && !debateOver) {
+    if (!confirm('Switching modes will reset the current debate. Continue?')) return;
+  }
+  mode = newMode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-mode="${newMode}"]`).classList.add('active');
+
+  // Show/hide char counter
+  document.getElementById('charCount').style.display = newMode === 'sprint' ? 'block' : 'none';
+
+  // Update placeholder
+  const input = document.getElementById('userInput');
+  if (newMode === 'defense') {
+    input.placeholder = 'Defend your position...';
+  } else {
+    input.placeholder = 'Make your argument...';
+  }
+
+  resetDebate();
+}
+
+function randomTopic() {
+  let t;
+  do { t = getRandomTopic(); } while (t === topic && TOPICS.length > 1);
+  topic = t;
+  document.getElementById('topicDisplay').textContent = topic;
+  resetDebate();
+}
+
+function customTopic() {
+  const t = prompt('Enter your debate topic:', topic || '');
+  if (t && t.trim()) {
+    topic = t.trim();
+    document.getElementById('topicDisplay').textContent = topic;
+    resetDebate();
+  }
+}
+
+function resetDebate() {
+  debateHistory = [];
+  debateStarted = false;
+  debateOver = false;
+  totalExchanges = 0;
+  document.getElementById('debateArea').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('sendBtn').disabled = !topic;
+  document.getElementById('userInput').value = '';
+  document.getElementById('userInput').disabled = false;
+  updateCharCount();
+  document.getElementById('overlayContainer').innerHTML = '';
+}
+
+function updateCharCount() {
+  const input = document.getElementById('userInput');
+  const count = document.getElementById('charCount');
+  const len = input.value.length;
+  count.textContent = `${len}/150`;
+  count.className = 'char-count';
+  if (len > 140) count.classList.add('warning');
+  if (len > 150) count.classList.add('over');
+}
+
+function handleInput() {
+  updateCharCount();
+  const input = document.getElementById('userInput');
+  const len = input.value.length;
+
+  if (mode === 'sprint' && len > 150) {
+    input.value = input.value.substring(0, 150);
+    updateCharCount();
+  }
+
+  document.getElementById('sendBtn').disabled = input.value.trim() === '' || debateOver;
+}
+
+function handleKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!document.getElementById('sendBtn').disabled) sendMessage();
+  }
+}
+
+// ─── DEBATE AREA ─────────────────────────────
+function addMessage(role, content) {
+  const area = document.getElementById('debateArea');
+  document.getElementById('emptyState').style.display = 'none';
+
+  const isAI = role === 'ai';
+  const icon = isAI ? (mode === 'defense' ? '⚔️' : '🏛️') : '👤';
+
+  const msg = document.createElement('div');
+  msg.className = `msg ${isAI ? 'ai' : 'user'}`;
+  msg.dataset.index = messageIndex++;
+
+  // Detect concession/result keywords
+  let contentClass = 'msg-content';
+  if (content.includes('I CONCEDE')) contentClass += ' concede-msg';
+  if (content.includes('YOUR DEFENSE HAS FALLEN')) contentClass += ' defeat-msg';
+  if (content.includes('IMPRESSIVE DEFENSE')) contentClass += ' defense-win-msg';
+
+  msg.innerHTML = `
+    <div class="msg-avatar">${icon}</div>
+    <div class="msg-body">
+      <div class="msg-sender">${isAI ? (mode === 'defense' ? 'AI Attacker' : 'AI Debater') : 'You'}</div>
+      <div class="${contentClass}">${escapeHtml(content)}</div>
+    </div>
+  `;
+  area.appendChild(msg);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addTypingIndicator() {
+  const area = document.getElementById('debateArea');
+  document.getElementById('emptyState').style.display = 'none';
+
+  const msg = document.createElement('div');
+  msg.className = 'msg ai typing';
+  msg.id = 'typingIndicator';
+  msg.innerHTML = `
+    <div class="msg-avatar">${mode === 'defense' ? '⚔️' : '🏛️'}</div>
+    <div class="msg-body">
+      <div class="msg-sender">${mode === 'defense' ? 'AI Attacker' : 'AI Debater'}</div>
+      <div class="msg-content">
+        <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+      </div>
+    </div>
+  `;
+  area.appendChild(msg);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ─── DEBATE LOGIC ────────────────────────────
+async function sendMessage() {
+  if (debateOver) return;
+
+  const input = document.getElementById('userInput');
+  const userMessage = input.value.trim();
+  if (!userMessage) return;
+
+  // Check Sprint mode char limit
+  if (mode === 'sprint' && userMessage.length > 150) {
+    input.value = userMessage.substring(0, 150);
+    updateCharCount();
+    return;
+  }
+
+  // Disable input while processing
+  input.disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+  updateCharCount();
+
+  // Add user message
+  addMessage('user', userMessage);
+  debateHistory.push({ role: 'user', content: userMessage });
+
+  // First message: kick off the debate
+  if (!debateStarted) {
+    debateStarted = true;
+    await getAIResponse(true);
+  } else {
+    await getAIResponse(false);
+  }
+
+  input.disabled = false;
+  document.getElementById('sendBtn').disabled = debateOver;
+  if (!debateOver) input.focus();
+}
+
+async function getAIResponse(isFirst) {
+  addTypingIndicator();
+  totalExchanges++;
+
+  let messages = [{ role: 'system', content: getSystemPrompt() }];
+
+  if (isFirst) {
+    // Opening — AI takes a position
+    if (mode === 'defense') {
+      // In defense mode, AI attacks first
+      messages.push({
+        role: 'user',
+        content: `The debate topic is: "${topic}". I will DEFEND this position. Attack my position with everything you have. Start the debate.`
+      });
+    } else {
+      messages.push({
+        role: 'user',
+        content: `The debate topic is: "${topic}". Take a clear stance on this topic and present your opening argument. Begin the debate.`
+      });
+    }
+  } else {
+    // Continuing debate
+    messages = messages.concat(debateHistory);
+  }
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + OR_KEY,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'Debate Arena'
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: messages,
+        temperature: 0.85,
+        max_tokens: 600,
+        top_p: 0.95
+      })
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`API error ${resp.status}: ${errText.substring(0, 200)}`);
+    }
+
+    const data = await resp.json();
+    const aiMessage = data.choices[0].message.content;
+
+    removeTypingIndicator();
+    addMessage('ai', aiMessage);
+    debateHistory.push({ role: 'assistant', content: aiMessage });
+
+    // Check for game-ending conditions
+    checkGameEnd(aiMessage);
+
+  } catch (err) {
+    removeTypingIndicator();
+    addMessage('ai', `⚠️ Error: ${err.message}. Please try again.`);
+    document.getElementById('userInput').disabled = false;
+    document.getElementById('sendBtn').disabled = false;
+  }
+}
+
+function checkGameEnd(aiMessage) {
+  const msg = aiMessage;
+
+  if (mode === 'defense') {
+    // AI (attacker) declares player's defense has fallen → player LOST
+    if (msg.includes('YOUR DEFENSE HAS FALLEN')) {
+      endDebate('lose');
+      return;
+    }
+    // AI (attacker) acknowledges player's defense → player WON
+    if (msg.includes('IMPRESSIVE DEFENSE') && msg.includes('You win')) {
+      endDebate('win');
+      return;
+    }
+  } else {
+    // AI concedes → player WON
+    if (msg.includes('I CONCEDE')) {
+      endDebate('win');
+      return;
+    }
+    // AI declares it can't be beaten (very rare edge case — shouldn't normally happen)
+    // But just in case the AI declares total victory unilaterally
+  }
+
+  // Cap at reasonable number of exchanges to prevent infinite loops
+  if (totalExchanges >= 15 && !debateOver) {
+    // Force a resolution — too many exchanges
+    if (mode === 'defense') {
+      addMessage('ai', '⚖️ *The debate has reached its limit. After many exchanges, the judges are deliberating...*\n\nGiven the sustained attacks, YOUR DEFENSE HAS FALLEN! I win this debate. 🏆\nThe sheer volume of attacks eventually overwhelmed your position.');
+      endDebate('lose');
+    } else {
+      addMessage('ai', '⚖️ *The debate has reached its limit after many exchanges. The judges have deliberated...*\n\nAlright, after all these exchanges, I must admit — you fought well. Let\'s call it: I CONCEDE. 🏳️\nYour persistence was impressive. Victory is yours.');
+      endDebate('win');
+    }
+  }
+}
+
+function endDebate(result) {
+  debateOver = true;
+  document.getElementById('userInput').disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  const isWin = result === 'win';
+  showOverlay(isWin);
+}
+
+// ─── VICTORY / DEFEAT OVERLAY ────────────────
+function showOverlay(isWin) {
+  const container = document.getElementById('overlayContainer');
+
+  const stats = {
+    exchanges: totalExchanges,
+    chars: debateHistory.filter(m => m.role === 'user').reduce((sum, m) => sum + m.content.length, 0)
+  };
+
+  const title = isWin ? 'VICTORY!' : 'DEFEATED';
+  const titleClass = isWin ? 'win' : 'lose';
+  const icon = isWin ? '🏆' : '💀';
+  const sub = isWin
+    ? 'You out-debated the AI! Your logic was sharper, your arguments stronger, and your wit unmatched. The machine bows to human intellect.'
+    : 'The AI\'s arguments proved too strong. But every defeat is a lesson — study, adapt, and return stronger.';
+
+  container.innerHTML = `
+    <div class="overlay">
+      <div class="overlay-card">
+        <div class="overlay-icon">${icon}</div>
+        <div class="overlay-title ${titleClass}">${title}</div>
+        <div class="overlay-sub">${sub}</div>
+        <div class="overlay-stats">
+          <div class="stat-box">
+            <div class="stat-num">${stats.exchanges}</div>
+            <div class="stat-label">Exchanges</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">${stats.chars}</div>
+            <div class="stat-label">Chars Written</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">${mode === 'titan' ? '🥇' : mode === 'sprint' ? '⚡' : '🛡️'}</div>
+            <div class="stat-label">${mode.toUpperCase()}</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="resetAfterGame()">Debate Again 🔄</button>
+      </div>
+    </div>
+  `;
+
+  if (isWin) spawnConfetti();
+}
+
+function resetAfterGame() {
+  document.getElementById('overlayContainer').innerHTML = '';
+  resetDebate();
+}
+
+// ─── CONFETTI ────────────────────────────────
+function spawnConfetti() {
+  const colors = ['#f0b90b','#ff5e3a','#00e676','#4a90ff','#ff4081','#7c4dff','#00e5ff','#ffab00'];
+  const shapes = ['█','●','◆','▲','★','♦'];
+  const count = 120;
+
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+      piece.style.cssText = `
+        left:${Math.random() * 100}vw;
+        top:-5vh;
+        color:${colors[Math.floor(Math.random() * colors.length)]};
+        font-size:${8 + Math.random() * 16}px;
+        animation-duration:${2 + Math.random() * 3}s;
+        animation-delay:${Math.random() * 0.5}s;
+      `;
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 4000);
+    }, i * 15);
+  }
+}
+
+// ─── PARTICLES BACKGROUND ────────────────────
+function initParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 40; i++) {
+    const span = document.createElement('span');
+    span.style.cssText = `
+      left:${Math.random() * 100}%;
+      top:${Math.random() * 100}%;
+      animation-delay:${Math.random() * 8}s;
+      animation-duration:${6 + Math.random() * 10}s;
+      width:${1 + Math.random() * 3}px;
+      height:${1 + Math.random() * 3}px;
+    `;
+    container.appendChild(span);
+  }
+}
+
+// ─── INIT ────────────────────────────────────
+initParticles();
+document.getElementById('userInput').focus();
+
+// Auto-pick a random topic on load
+setTimeout(() => {
+  randomTopic();
+  document.getElementById('sendBtn').disabled = false;
+}, 300);
+</script>
+
+</body>
+</html>
