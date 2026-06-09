@@ -409,7 +409,7 @@ main { position:relative; z-index:10; flex:1; display:flex; flex-direction:colum
 <script>
 // ─── CONFIG ──────────────────────────────────
 const OR_KEY = atob('c2stb3ItdjEtM2MzNmNmMDgxYjQ4OGZkYjI0N2RiODA3MGFhOGNiODdlYzgzM2QzM2E4Mzg1NWVlZmFhNWQ1ODlmMGY1MTg0Yw==');
-const MODEL = 'google/gemma-4-31b-it:free';
+const MODEL = 'openrouter/free';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // ─── STATE ───────────────────────────────────
@@ -679,7 +679,7 @@ async function getAIResponse(isFirst) {
   try {
     let lastError = null;
     // Try primary model, fall back if rate-limited
-    for (const mdl of [MODEL, 'moonshotai/kimi-k2.6:free', 'nvidia/nemotron-nano-12b-v2-vl:free']) {
+    for (const mdl of ['openrouter/free', 'google/gemma-4-31b-it:free', 'moonshotai/kimi-k2.6:free', 'qwen/qwen3-next-80b-a3b-instruct:free', 'nvidia/nemotron-3-nano-30b-a3b:free', 'liquid/lfm-2.5-1.2b-instruct:free', 'nvidia/nemotron-nano-12b-v2-vl:free']) {
       try {
         const resp = await fetch(API_URL, {
           method: 'POST',
